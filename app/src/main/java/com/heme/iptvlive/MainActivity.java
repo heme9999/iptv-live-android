@@ -104,13 +104,7 @@ public final class MainActivity extends AppCompatActivity {
             playerView.setOnTouchListener((view, event) -> {
                 if (event.getAction() == MotionEvent.ACTION_UP && mobilePlayerFullscreen) {
                     boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-                    if (landscape) {
-                        boolean tappedLeftSide = event.getX() <= view.getWidth() * 0.35f;
-                        if (tappedLeftSide) showMobileChannelDrawer();
-                        else if (mobileDrawerVisible) hideMobileChannelDrawer();
-                    } else {
-                        toggleMobileChannelDrawer();
-                    }
+                    if (landscape) toggleMobileChannelDrawer();
                 }
                 return false;
             });
@@ -228,7 +222,15 @@ public final class MainActivity extends AppCompatActivity {
             String latency = channel.latencyMs >= 0 ? " · " + channel.latencyMs + " ms" : "";
             nowPlaying.setText("LIVE  " + channel.name + "\n" + channel.group + latency);
         }
-        if (BuildConfig.TV_UI) enterTvPlayerFullscreen(); else enterMobilePlayerFullscreen();
+        if (BuildConfig.TV_UI) {
+            enterTvPlayerFullscreen();
+        } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            enterMobilePlayerFullscreen();
+        } else {
+            exitMobilePlayerFullscreen();
+            findViewById(R.id.nav_rail).setVisibility(View.VISIBLE);
+            findViewById(R.id.sidebar).setVisibility(View.VISIBLE);
+        }
     }
 
     private void enterTvPlayerFullscreen() {
@@ -339,5 +341,11 @@ public final class MainActivity extends AppCompatActivity {
         return super.onKeyDown(keyCode, event);
     }
     @Override public boolean onKeyLongPress(int keyCode, KeyEvent event) { if (keyCode == KeyEvent.KEYCODE_MENU) { UpdateChecker.check(this, true); return true; } return super.onKeyLongPress(keyCode, event); }
-    @Override public void onConfigurationChanged(Configuration newConfig) { super.onConfigurationChanged(newConfig); }
+    @Override public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (!BuildConfig.TV_UI && player != null && player.getMediaItemCount() > 0) {
+            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) enterMobilePlayerFullscreen();
+            else exitMobilePlayerFullscreen();
+        }
+    }
 }
