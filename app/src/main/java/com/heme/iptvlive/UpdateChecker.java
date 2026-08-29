@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Build;
+import android.provider.Settings;
 import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -70,11 +72,18 @@ final class UpdateChecker {
     }
 
     private static void download(Activity activity, String url) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !activity.getPackageManager().canRequestPackageInstalls()) {
+            Toast.makeText(activity, "请允许本应用安装更新，然后再次点击检查更新", Toast.LENGTH_LONG).show();
+            activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + activity.getPackageName())));
+            return;
+        }
         DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
+        String destination = "IPTV-Live-update-" + System.currentTimeMillis() + ".apk";
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url))
             .setTitle("正在下载 " + BuildConfig.UPDATE_ASSET)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, BuildConfig.UPDATE_ASSET)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, destination)
             .setMimeType("application/vnd.android.package-archive");
         long id = manager.enqueue(request);
         new Thread(() -> waitAndInstall(activity, manager, id), "update-download").start();
@@ -98,4 +107,3 @@ final class UpdateChecker {
         }
     }
 }
-

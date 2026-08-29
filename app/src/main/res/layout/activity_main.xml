@@ -1,28 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/root"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#070B12"
-    android:orientation="horizontal">
-    <LinearLayout
-        android:id="@+id/sidebar"
-        android:layout_width="320dp"
-        android:layout_height="match_parent"
-        android:background="#0B121D"
-        android:orientation="vertical"
-        android:padding="16dp">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="IPTV LIVE" android:textColor="#78FFF0" android:textSize="22sp" android:textStyle="bold" android:paddingBottom="12dp" />
-        <androidx.recyclerview.widget.RecyclerView android:id="@+id/channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="24dp" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#070B12" android:orientation="horizontal">
+    <LinearLayout android:id="@+id/nav_rail" android:layout_width="190dp" android:layout_height="match_parent" android:background="#0B121D" android:orientation="vertical" android:padding="16dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="24dp" android:text="IPTV LIVE" android:textColor="#78FFF0" android:textSize="22sp" android:textStyle="bold" />
+        <Button android:id="@+id/nav_home" style="@style/NavButton" android:text="主页" />
+        <Button android:id="@+id/nav_live" style="@style/NavButton" android:text="直播" />
+        <Button android:id="@+id/nav_categories" style="@style/NavButton" android:text="分类" />
+        <Button android:id="@+id/nav_settings" style="@style/NavButton" android:text="设置" />
+        <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+        <TextView android:id="@+id/nav_version" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#8290A3" android:textSize="12sp" />
     </LinearLayout>
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/player_view"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:keepScreenOn="true"
-        app:show_buffering="when_playing"
-        app:use_controller="true" />
+    <FrameLayout android:id="@+id/page_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1">
+        <LinearLayout android:id="@+id/page_home" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="vertical" android:padding="48dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="欢迎回来" android:textColor="#F4F7FA" android:textSize="38sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:layout_marginBottom="36dp" android:text="选择一个入口开始观看" android:textColor="#9AA9BC" android:textSize="18sp" />
+            <Button android:id="@+id/home_continue" style="@style/HomeActionButton" android:text="继续观看" />
+            <Button android:id="@+id/home_live" style="@style/HomeActionButton" android:text="进入直播" />
+            <Button android:id="@+id/home_categories" style="@style/HomeActionButton" android:text="浏览分类" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/page_live" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:visibility="gone">
+            <LinearLayout android:id="@+id/sidebar" android:layout_width="330dp" android:layout_height="match_parent" android:background="#0E1723" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="12dp" android:text="全部频道" android:textColor="#F4F7FA" android:textSize="20sp" android:textStyle="bold" />
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="24dp" />
+            </LinearLayout>
+            <androidx.media3.ui.PlayerView android:id="@+id/player_view" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:keepScreenOn="true" app:show_buffering="when_playing" app:use_controller="true" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/page_categories" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:padding="24dp" android:visibility="gone">
+            <LinearLayout android:layout_width="300dp" android:layout_height="match_parent" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="14dp" android:text="频道分类" android:textColor="#F4F7FA" android:textSize="24sp" android:textStyle="bold" />
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/category_list" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_marginStart="28dp" android:layout_weight="1" android:orientation="vertical">
+                <TextView android:id="@+id/category_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="14dp" android:text="请选择分类" android:textColor="#78FFF0" android:textSize="24sp" android:textStyle="bold" />
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/category_channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+            </LinearLayout>
+        </LinearLayout>
+        <ScrollView android:id="@+id/page_settings" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:visibility="gone">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="48dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="30dp" android:text="设置" android:textColor="#F4F7FA" android:textSize="32sp" android:textStyle="bold" />
+                <TextView style="@style/SettingLabel" android:text="启动后进入" />
+                <Spinner android:id="@+id/startup_page" android:layout_width="360dp" android:layout_height="58dp" android:background="#182433" android:focusable="true" android:paddingHorizontal="16dp" />
+                <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay" android:layout_width="wrap_content" android:layout_height="64dp" android:layout_marginTop="24dp" android:focusable="true" android:text="进入直播时自动播放第一个频道" android:textColor="#F4F7FA" android:textSize="18sp" />
+                <Button android:id="@+id/check_update" style="@style/SettingButton" android:layout_marginTop="28dp" android:text="检查软件更新" />
+                <TextView android:id="@+id/settings_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="#8290A3" android:textSize="15sp" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
 </LinearLayout>
-

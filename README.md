@@ -6,6 +6,8 @@
 
 - AndroidX Media3 / ExoPlayer 播放 HLS、FLV 等直播流
 - TCL / Sony 电视遥控器焦点导航，Pixel 手机触控布局
+- 主页、直播、频道分类、设置四个一级入口
+- 可选择启动页面、自动播放行为，并记忆最近观看频道
 - Activity 离开前台时立即停止并释放播放器，避免后台继续播放
 - 启动时通过 GitHub Releases 检查更新，按设备下载对应 APK
 - 最低 Android 6.0（API 23）

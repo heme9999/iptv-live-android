@@ -10,13 +10,19 @@ import java.util.List;
 import java.util.function.Consumer;
 
 final class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.Holder> {
-    private final List<Channel> channels;
+    private List<Channel> channels;
     private final Consumer<Channel> onClick;
     private int selected = -1;
 
     ChannelAdapter(List<Channel> channels, Consumer<Channel> onClick) {
         this.channels = channels;
         this.onClick = onClick;
+    }
+
+    void replace(List<Channel> replacement) {
+        channels = replacement;
+        selected = -1;
+        notifyDataSetChanged();
     }
 
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
@@ -43,4 +49,3 @@ final class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.Holder> {
         Holder(View view) { super(view); name = view.findViewById(R.id.channel_name); }
     }
 }
-
