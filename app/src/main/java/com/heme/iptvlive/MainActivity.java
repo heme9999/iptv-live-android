@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -35,6 +36,7 @@ public final class MainActivity extends AppCompatActivity {
     private ChannelAdapter categoryChannelAdapter;
     private SharedPreferences preferences;
     private boolean mobilePlayerFullscreen;
+    private boolean mobileDrawerVisible;
 
     @Override protected void onCreate(@Nullable Bundle state) {
         super.onCreate(state);
@@ -88,6 +90,10 @@ public final class MainActivity extends AppCompatActivity {
             LinearLayout.LayoutParams channelParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.2f);
             channelParams.topMargin = dp(16);
             channelPane.setLayoutParams(channelParams);
+            playerView.setOnTouchListener((view, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_UP && mobilePlayerFullscreen) toggleMobileChannelDrawer();
+                return false;
+            });
         }
     }
 
@@ -121,6 +127,9 @@ public final class MainActivity extends AppCompatActivity {
             RecyclerView live = findViewById(R.id.channels);
             live.setLayoutManager(new LinearLayoutManager(this));
             live.setAdapter(new ChannelAdapter(allChannels, this::play));
+            RecyclerView mobileDrawer = findViewById(R.id.mobile_drawer_channels);
+            mobileDrawer.setLayoutManager(new LinearLayoutManager(this));
+            mobileDrawer.setAdapter(new ChannelAdapter(allChannels, channel -> { play(channel); hideMobileChannelDrawer(); }));
             RecyclerView categoryChannels = findViewById(R.id.category_channels);
             categoryChannels.setLayoutManager(new LinearLayoutManager(this));
             categoryChannelAdapter = new ChannelAdapter(new ArrayList<>(), channel -> { showPage(1); play(channel); });
@@ -170,6 +179,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void enterMobilePlayerFullscreen() {
         mobilePlayerFullscreen = true;
+        hideMobileChannelDrawer();
         findViewById(R.id.nav_rail).setVisibility(View.GONE);
         findViewById(R.id.sidebar).setVisibility(View.GONE);
         findViewById(R.id.page_container).setLayoutParams(
@@ -182,6 +192,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void exitMobilePlayerFullscreen() {
         if (!mobilePlayerFullscreen) return;
+        hideMobileChannelDrawer();
         mobilePlayerFullscreen = false;
         findViewById(R.id.nav_rail).setVisibility(View.VISIBLE);
         findViewById(R.id.sidebar).setVisibility(View.VISIBLE);
@@ -189,11 +200,29 @@ public final class MainActivity extends AppCompatActivity {
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.2f));
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
     }
+
+    private void toggleMobileChannelDrawer() {
+        if (mobileDrawerVisible) hideMobileChannelDrawer(); else showMobileChannelDrawer();
+    }
+
+    private void showMobileChannelDrawer() {
+        mobileDrawerVisible = true;
+        findViewById(R.id.mobile_channel_drawer).setVisibility(View.VISIBLE);
+    }
+
+    private void hideMobileChannelDrawer() {
+        mobileDrawerVisible = false;
+        findViewById(R.id.mobile_channel_drawer).setVisibility(View.GONE);
+    }
     private void releasePlayer() { if (player != null) { player.stop(); player.clearMediaItems(); player.release(); player = null; playerView.setPlayer(null); } }
     @Override protected void onStop() { super.onStop(); if (!isChangingConfigurations()) releasePlayer(); }
     @Override protected void onDestroy() { releasePlayer(); super.onDestroy(); }
     @SuppressWarnings("deprecation")
     @Override public void onBackPressed() {
+        if (!BuildConfig.TV_UI && mobileDrawerVisible) {
+            hideMobileChannelDrawer();
+            return;
+        }
         if (!BuildConfig.TV_UI && mobilePlayerFullscreen) {
             exitMobilePlayerFullscreen();
             return;

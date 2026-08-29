@@ -10,8 +10,8 @@ android {
         applicationId = "com.heme.iptvlive"
         minSdk = 23
         targetSdk = 35
-        versionCode = 603
-        versionName = "6.0.3"
+        versionCode = 604
+        versionName = "6.0.4"
         buildConfigField("String", "GITHUB_REPO", "\"heme9999/iptv-live-android\"")
     }
 

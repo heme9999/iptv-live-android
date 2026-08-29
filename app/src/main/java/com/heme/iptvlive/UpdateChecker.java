@@ -21,12 +21,15 @@ import java.nio.charset.StandardCharsets;
 
 final class UpdateChecker {
     static void check(Activity activity, boolean userInitiated) {
+        if (userInitiated) Toast.makeText(activity, "正在检查更新…", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             try {
                 HttpURLConnection connection = (HttpURLConnection) new URL(
-                    "https://api.github.com/repos/" + BuildConfig.GITHUB_REPO + "/releases/latest").openConnection();
+                    "https://api.github.com/repos/" + BuildConfig.GITHUB_REPO + "/releases/latest?t=" + System.currentTimeMillis()).openConnection();
                 connection.setRequestProperty("Accept", "application/vnd.github+json");
                 connection.setRequestProperty("User-Agent", "IPTV-Live-Android");
+                connection.setRequestProperty("Cache-Control", "no-cache");
+                connection.setUseCaches(false);
                 connection.setConnectTimeout(10_000);
                 connection.setReadTimeout(10_000);
                 if (connection.getResponseCode() != 200) throw new IllegalStateException("GitHub HTTP " + connection.getResponseCode());
@@ -37,7 +40,9 @@ final class UpdateChecker {
                 JSONObject release = new JSONObject(body.toString());
                 int remoteCode = parseVersionCode(release.optString("tag_name"));
                 String download = findAsset(release.optJSONArray("assets"));
-                if (remoteCode > BuildConfig.VERSION_CODE && download != null) {
+                if (remoteCode > BuildConfig.VERSION_CODE && download == null) {
+                    throw new IllegalStateException("新版本缺少 " + BuildConfig.UPDATE_ASSET);
+                } else if (remoteCode > BuildConfig.VERSION_CODE) {
                     activity.runOnUiThread(() -> new AlertDialog.Builder(activity)
                         .setTitle("发现新版本 " + release.optString("tag_name"))
                         .setMessage(release.optString("body", "建议更新到最新版。"))

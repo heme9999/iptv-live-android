@@ -44,5 +44,10 @@
                 <TextView android:id="@+id/settings_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="#8290A3" android:textSize="15sp" />
             </LinearLayout>
         </ScrollView>
+        <LinearLayout android:id="@+id/mobile_channel_drawer" android:layout_width="310dp" android:layout_height="match_parent" android:layout_gravity="start" android:background="#F20B121D" android:elevation="16dp" android:orientation="vertical" android:padding="16dp" android:visibility="gone">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="14dp" android:text="选择频道" android:textColor="#78FFF0" android:textSize="22sp" android:textStyle="bold" />
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/mobile_drawer_channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="10dp" android:text="轻触画面或按返回键收起" android:textColor="#8290A3" android:textSize="13sp" />
+        </LinearLayout>
     </FrameLayout>
 </LinearLayout>
