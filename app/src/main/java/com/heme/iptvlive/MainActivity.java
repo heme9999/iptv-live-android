@@ -43,6 +43,7 @@ public final class MainActivity extends AppCompatActivity {
     private boolean mobilePlayerFullscreen;
     private boolean mobileDrawerVisible;
     private boolean enteringPictureInPicture;
+    private boolean tvPlayerFullscreen;
     private final LatencyTester latencyTester = new LatencyTester();
 
     @Override protected void onCreate(@Nullable Bundle state) {
@@ -172,6 +173,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void showPage(int index) {
         if (!BuildConfig.TV_UI && index != 1) exitMobilePlayerFullscreen();
+        if (BuildConfig.TV_UI && index != 1) exitTvPlayerFullscreen();
         for (int i = 0; i < pages.size(); i++) pages.get(i).setVisibility(i == index ? View.VISIBLE : View.GONE);
         int[] navIds = {R.id.nav_home, R.id.nav_live, R.id.nav_categories, R.id.nav_settings};
         for (int i = 0; i < navIds.length; i++) findViewById(navIds[i]).setSelected(i == index);
@@ -190,7 +192,26 @@ public final class MainActivity extends AppCompatActivity {
         ensurePlayer();
         preferences.edit().putString("last_url", channel.url).putString("last_name", channel.name).apply();
         player.setMediaItem(MediaItem.fromUri(Uri.parse(channel.url))); player.prepare(); player.play();
-        if (!BuildConfig.TV_UI) enterMobilePlayerFullscreen();
+        if (BuildConfig.TV_UI) enterTvPlayerFullscreen(); else enterMobilePlayerFullscreen();
+    }
+
+    private void enterTvPlayerFullscreen() {
+        tvPlayerFullscreen = true;
+        findViewById(R.id.nav_rail).setVisibility(View.GONE);
+        findViewById(R.id.sidebar).setVisibility(View.GONE);
+        playerView.requestFocus();
+    }
+
+    private void exitTvPlayerFullscreen() {
+        if (!tvPlayerFullscreen) return;
+        tvPlayerFullscreen = false;
+        findViewById(R.id.nav_rail).setVisibility(View.VISIBLE);
+        findViewById(R.id.sidebar).setVisibility(View.VISIBLE);
+        RecyclerView channels = findViewById(R.id.channels);
+        channels.post(() -> {
+            RecyclerView.ViewHolder holder = channels.findViewHolderForAdapterPosition(0);
+            if (holder != null) holder.itemView.requestFocus(); else channels.requestFocus();
+        });
     }
 
     private void enterMobilePlayerFullscreen() {
@@ -259,6 +280,10 @@ public final class MainActivity extends AppCompatActivity {
     @Override protected void onDestroy() { latencyTester.close(); releasePlayer(); super.onDestroy(); }
     @SuppressWarnings("deprecation")
     @Override public void onBackPressed() {
+        if (BuildConfig.TV_UI && tvPlayerFullscreen) {
+            exitTvPlayerFullscreen();
+            return;
+        }
         if (!BuildConfig.TV_UI && mobileDrawerVisible) {
             hideMobileChannelDrawer();
             return;
@@ -268,6 +293,14 @@ public final class MainActivity extends AppCompatActivity {
             return;
         }
         super.onBackPressed();
+    }
+    @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (BuildConfig.TV_UI && tvPlayerFullscreen &&
+            (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_MENU)) {
+            exitTvPlayerFullscreen();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
     @Override public boolean onKeyLongPress(int keyCode, KeyEvent event) { if (keyCode == KeyEvent.KEYCODE_MENU) { UpdateChecker.check(this, true); return true; } return super.onKeyLongPress(keyCode, event); }
     @Override public void onConfigurationChanged(Configuration newConfig) { super.onConfigurationChanged(newConfig); }
