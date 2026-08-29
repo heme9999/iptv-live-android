@@ -1,4 +1,4 @@
-# IPTV Live Android
+# My IPTV
 
 基于原 APK 内置播放源重写的 Android IPTV 客户端，同时输出 TCL 75T7K、Sony BRAVIA 和 Pixel 三个版本。
 

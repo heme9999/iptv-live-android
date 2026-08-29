@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#070B12" android:orientation="horizontal">
     <LinearLayout android:id="@+id/nav_rail" android:layout_width="190dp" android:layout_height="match_parent" android:background="#0B121D" android:orientation="vertical" android:padding="16dp">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="24dp" android:text="IPTV LIVE" android:textColor="#78FFF0" android:textSize="22sp" android:textStyle="bold" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="24dp" android:text="My IPTV" android:textColor="#78FFF0" android:textSize="22sp" android:textStyle="bold" />
         <Button android:id="@+id/nav_home" style="@style/NavButton" android:text="主页" />
         <Button android:id="@+id/nav_live" style="@style/NavButton" android:text="直播" />
         <Button android:id="@+id/nav_categories" style="@style/NavButton" android:text="分类" />

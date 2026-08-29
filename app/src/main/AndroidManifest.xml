@@ -9,9 +9,9 @@
     <application
         android:allowBackup="true"
         android:banner="@drawable/tv_banner"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/my_iptv_icon"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/my_iptv_icon"
         android:supportsRtl="true"
         android:theme="@style/Theme.IPTVLive"
         android:usesCleartextTraffic="true">

@@ -10,8 +10,8 @@ android {
         applicationId = "com.heme.iptvlive"
         minSdk = 23
         targetSdk = 35
-        versionCode = 611
-        versionName = "6.0.11"
+        versionCode = 612
+        versionName = "6.0.12"
         buildConfigField("String", "GITHUB_REPO", "\"heme9999/iptv-live-android\"")
     }
 
@@ -35,7 +35,7 @@ android {
             versionNameSuffix = "-tcl"
             buildConfigField("String", "UPDATE_ASSET", "\"IPTV-Live-TCL.apk\"")
             buildConfigField("boolean", "TV_UI", "true")
-            resValue("string", "app_name", "TCL IPTV Live")
+            resValue("string", "app_name", "My IPTV")
         }
         create("sony") {
             dimension = "device"
@@ -43,7 +43,7 @@ android {
             versionNameSuffix = "-sony"
             buildConfigField("String", "UPDATE_ASSET", "\"IPTV-Live-Sony.apk\"")
             buildConfigField("boolean", "TV_UI", "true")
-            resValue("string", "app_name", "Sony IPTV Live")
+            resValue("string", "app_name", "My IPTV")
         }
         create("pixel") {
             dimension = "device"
@@ -51,7 +51,7 @@ android {
             versionNameSuffix = "-pixel"
             buildConfigField("String", "UPDATE_ASSET", "\"IPTV-Live-Pixel.apk\"")
             buildConfigField("boolean", "TV_UI", "false")
-            resValue("string", "app_name", "Pixel IPTV Live")
+            resValue("string", "app_name", "My IPTV")
         }
     }
 
