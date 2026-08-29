@@ -1,0 +1,4 @@
+<resources>
+    <item name="home_channels" type="id" />
+    <item name="now_playing" type="id" />
+</resources>

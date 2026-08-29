@@ -37,7 +37,7 @@ final class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.Holder> {
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {
         Channel channel = channels.get(position);
         String latency = channel.latencyMs == -2 ? "测速中" : channel.latencyMs < 0 ? "超时" : channel.latencyMs + " ms";
-        holder.name.setText(channel.group + "  ·  " + channel.name + "\n" + latency);
+        holder.name.setText(String.format(java.util.Locale.getDefault(), "%02d  %s\n%s  ·  HD  ·  %s", position + 1, channel.name, channel.group, latency));
         holder.itemView.setSelected(position == selected);
         holder.itemView.setOnClickListener(v -> {
             int old = selected;

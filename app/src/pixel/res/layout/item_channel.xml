@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/channel_name" android:layout_width="match_parent" android:layout_height="128dp"
+    android:layout_margin="6dp" android:background="@drawable/mobile_card" android:ellipsize="end"
+    android:focusable="true" android:gravity="center_vertical" android:maxLines="4"
+    android:textColor="#F5F7FB" android:textSize="15sp" />

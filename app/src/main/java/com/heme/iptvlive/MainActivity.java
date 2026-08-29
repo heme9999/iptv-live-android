@@ -22,6 +22,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.media3.common.MediaItem;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public final class MainActivity extends AppCompatActivity {
     private List<Channel> allChannels = new ArrayList<>();
     private ChannelAdapter categoryChannelAdapter;
     private ChannelAdapter liveAdapter;
+    private ChannelAdapter homeAdapter;
     private ChannelAdapter mobileDrawerAdapter;
     private SharedPreferences preferences;
     private boolean mobilePlayerFullscreen;
@@ -136,6 +138,12 @@ public final class MainActivity extends AppCompatActivity {
             live.setLayoutManager(new LinearLayoutManager(this));
             liveAdapter = new ChannelAdapter(allChannels, this::play);
             live.setAdapter(liveAdapter);
+            RecyclerView homeChannels = findViewById(R.id.home_channels);
+            if (homeChannels != null) {
+                homeChannels.setLayoutManager(new GridLayoutManager(this, BuildConfig.TV_UI ? 4 : 2));
+                homeAdapter = new ChannelAdapter(allChannels, channel -> { showPage(1); play(channel); });
+                homeChannels.setAdapter(homeAdapter);
+            }
             RecyclerView mobileDrawer = findViewById(R.id.mobile_drawer_channels);
             mobileDrawer.setLayoutManager(new LinearLayoutManager(this));
             mobileDrawerAdapter = new ChannelAdapter(allChannels, channel -> { play(channel); hideMobileChannelDrawer(); });
@@ -157,6 +165,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void refreshChannelLatency(Channel channel) {
         if (liveAdapter != null) liveAdapter.refresh(channel);
+        if (homeAdapter != null) homeAdapter.refresh(channel);
         if (mobileDrawerAdapter != null) mobileDrawerAdapter.refresh(channel);
         if (categoryChannelAdapter != null) categoryChannelAdapter.refresh(channel);
     }
@@ -192,6 +201,11 @@ public final class MainActivity extends AppCompatActivity {
         ensurePlayer();
         preferences.edit().putString("last_url", channel.url).putString("last_name", channel.name).apply();
         player.setMediaItem(MediaItem.fromUri(Uri.parse(channel.url))); player.prepare(); player.play();
+        TextView nowPlaying = findViewById(R.id.now_playing);
+        if (nowPlaying != null) {
+            String latency = channel.latencyMs >= 0 ? " · " + channel.latencyMs + " ms" : "";
+            nowPlaying.setText("LIVE  " + channel.name + "\n" + channel.group + latency);
+        }
         if (BuildConfig.TV_UI) enterTvPlayerFullscreen(); else enterMobilePlayerFullscreen();
     }
 
