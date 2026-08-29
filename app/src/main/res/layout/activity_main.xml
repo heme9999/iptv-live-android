@@ -48,8 +48,8 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="48dp">
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="30dp" android:text="设置" android:textColor="#F4F7FA" android:textSize="32sp" android:textStyle="bold" />
                 <TextView style="@style/SettingLabel" android:text="启动后进入" />
-                <Spinner android:id="@+id/startup_page" android:layout_width="360dp" android:layout_height="58dp" android:background="#182433" android:focusable="true" android:paddingLeft="16dp" android:paddingRight="16dp" />
-                <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay" android:layout_width="wrap_content" android:layout_height="64dp" android:layout_marginTop="24dp" android:focusable="true" android:text="进入直播时自动播放第一个频道" android:textColor="#F4F7FA" android:textSize="18sp" />
+                <Spinner android:id="@+id/startup_page" android:layout_width="360dp" android:layout_height="58dp" android:background="@drawable/setting_control_background" android:focusable="true" android:popupBackground="#111C2A" />
+                <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay" android:layout_width="wrap_content" android:layout_height="64dp" android:layout_marginTop="24dp" android:background="@drawable/setting_control_background" android:focusable="true" android:minWidth="520dp" android:paddingLeft="18dp" android:paddingRight="18dp" android:text="进入直播时自动播放第一个频道" android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold" />
                 <Button android:id="@+id/check_update" style="@style/SettingButton" android:layout_marginTop="28dp" android:text="检查软件更新" />
                 <TextView android:id="@+id/settings_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="#8290A3" android:textSize="15sp" />
             </LinearLayout>

@@ -125,7 +125,9 @@ public final class MainActivity extends AppCompatActivity {
 
     private void configureSettings() {
         Spinner startup = findViewById(R.id.startup_page);
-        startup.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, START_PAGES));
+        ArrayAdapter<String> startupAdapter = new ArrayAdapter<>(this, R.layout.item_spinner_selected, START_PAGES);
+        startupAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
+        startup.setAdapter(startupAdapter);
         String saved = preferences.getString("startup_page", "主页");
         for (int i = 0; i < START_PAGES.length; i++) if (START_PAGES[i].equals(saved)) startup.setSelection(i);
         startup.setOnItemSelectedListener(new SimpleItemSelectedListener(position -> preferences.edit().putString("startup_page", START_PAGES[position]).apply()));
