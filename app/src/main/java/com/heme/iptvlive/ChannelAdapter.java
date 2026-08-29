@@ -7,14 +7,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
-import java.util.function.Consumer;
 
 final class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.Holder> {
     private List<Channel> channels;
-    private final Consumer<Channel> onClick;
+    interface OnChannelClick { void accept(Channel channel); }
+    private final OnChannelClick onClick;
     private int selected = -1;
 
-    ChannelAdapter(List<Channel> channels, Consumer<Channel> onClick) {
+    ChannelAdapter(List<Channel> channels, OnChannelClick onClick) {
         this.channels = channels;
         this.onClick = onClick;
     }

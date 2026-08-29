@@ -7,13 +7,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
-import java.util.function.Consumer;
 
 final class TextListAdapter extends RecyclerView.Adapter<TextListAdapter.Holder> {
     private final List<String> items;
-    private final Consumer<String> onClick;
+    interface OnTextClick { void accept(String value); }
+    private final OnTextClick onClick;
     private int selected = -1;
-    TextListAdapter(List<String> items, Consumer<String> onClick) { this.items = items; this.onClick = onClick; }
+    TextListAdapter(List<String> items, OnTextClick onClick) { this.items = items; this.onClick = onClick; }
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int type) { return new Holder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_channel, parent, false)); }
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {
         holder.text.setText(items.get(position));

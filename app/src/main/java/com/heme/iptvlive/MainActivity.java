@@ -64,6 +64,8 @@ public final class MainActivity extends AppCompatActivity {
             LinearLayout rail = findViewById(R.id.nav_rail);
             root.setOrientation(LinearLayout.VERTICAL);
             rail.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            findViewById(R.id.page_container).setLayoutParams(
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
             rail.setOrientation(LinearLayout.HORIZONTAL);
             rail.getChildAt(0).setVisibility(View.GONE);
             rail.getChildAt(5).setVisibility(View.GONE);
