@@ -102,7 +102,16 @@ public final class MainActivity extends AppCompatActivity {
             channelParams.topMargin = dp(16);
             channelPane.setLayoutParams(channelParams);
             playerView.setOnTouchListener((view, event) -> {
-                if (event.getAction() == MotionEvent.ACTION_UP && mobilePlayerFullscreen) toggleMobileChannelDrawer();
+                if (event.getAction() == MotionEvent.ACTION_UP && mobilePlayerFullscreen) {
+                    boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+                    if (landscape) {
+                        boolean tappedLeftSide = event.getX() <= view.getWidth() * 0.35f;
+                        if (tappedLeftSide) showMobileChannelDrawer();
+                        else if (mobileDrawerVisible) hideMobileChannelDrawer();
+                    } else {
+                        toggleMobileChannelDrawer();
+                    }
+                }
                 return false;
             });
         }
