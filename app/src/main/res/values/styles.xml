@@ -7,7 +7,7 @@
     </style>
     <style name="NavButton" parent="Widget.AppCompat.Button.Borderless">
         <item name="android:layout_width">match_parent</item><item name="android:layout_height">58dp</item><item name="android:layout_marginBottom">8dp</item>
-        <item name="android:gravity">center_vertical|start</item><item name="android:paddingLeft">18dp</item><item name="android:paddingRight">18dp</item><item name="android:textColor">#F4F7FA</item><item name="android:textSize">18sp</item><item name="android:focusable">true</item>
+        <item name="android:gravity">center_vertical|start</item><item name="android:paddingLeft">18dp</item><item name="android:paddingRight">18dp</item><item name="android:textColor">@color/nav_button_text</item><item name="android:textSize">18sp</item><item name="android:textStyle">bold</item><item name="android:focusable">true</item><item name="android:background">@drawable/nav_button_background</item><item name="android:stateListAnimator">@null</item>
     </style>
     <style name="HomeActionButton" parent="Widget.AppCompat.Button">
         <item name="android:layout_width">360dp</item><item name="android:layout_height">64dp</item><item name="android:layout_marginBottom">14dp</item><item name="android:textSize">19sp</item><item name="android:focusable">true</item>
