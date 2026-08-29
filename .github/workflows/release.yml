@@ -3,6 +3,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to update
+        required: true
+        default: v6.0.0
 
 permissions:
   contents: write
@@ -34,6 +39,7 @@ jobs:
           cp app/build/outputs/apk/pixel/release/app-pixel-release.apk IPTV-Live-Pixel.apk
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: |
             IPTV-Live-TCL.apk
             IPTV-Live-Sony.apk
