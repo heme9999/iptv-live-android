@@ -4,6 +4,7 @@ final class Channel {
     final String name;
     final String group;
     final String url;
+    volatile long latencyMs = -2L;
 
     Channel(String name, String group, String url) {
         this.name = name;
@@ -11,4 +12,3 @@ final class Channel {
         this.url = url;
     }
 }
-

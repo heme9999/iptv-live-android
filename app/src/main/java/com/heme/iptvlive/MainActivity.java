@@ -1,9 +1,12 @@
 package com.heme.iptvlive;
 
+import android.app.PictureInPictureParams;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Rational;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -34,9 +37,13 @@ public final class MainActivity extends AppCompatActivity {
     private PlayerView playerView;
     private List<Channel> allChannels = new ArrayList<>();
     private ChannelAdapter categoryChannelAdapter;
+    private ChannelAdapter liveAdapter;
+    private ChannelAdapter mobileDrawerAdapter;
     private SharedPreferences preferences;
     private boolean mobilePlayerFullscreen;
     private boolean mobileDrawerVisible;
+    private boolean enteringPictureInPicture;
+    private final LatencyTester latencyTester = new LatencyTester();
 
     @Override protected void onCreate(@Nullable Bundle state) {
         super.onCreate(state);
@@ -126,10 +133,12 @@ public final class MainActivity extends AppCompatActivity {
             allChannels = M3uParser.fromAssets(this);
             RecyclerView live = findViewById(R.id.channels);
             live.setLayoutManager(new LinearLayoutManager(this));
-            live.setAdapter(new ChannelAdapter(allChannels, this::play));
+            liveAdapter = new ChannelAdapter(allChannels, this::play);
+            live.setAdapter(liveAdapter);
             RecyclerView mobileDrawer = findViewById(R.id.mobile_drawer_channels);
             mobileDrawer.setLayoutManager(new LinearLayoutManager(this));
-            mobileDrawer.setAdapter(new ChannelAdapter(allChannels, channel -> { play(channel); hideMobileChannelDrawer(); }));
+            mobileDrawerAdapter = new ChannelAdapter(allChannels, channel -> { play(channel); hideMobileChannelDrawer(); });
+            mobileDrawer.setAdapter(mobileDrawerAdapter);
             RecyclerView categoryChannels = findViewById(R.id.category_channels);
             categoryChannels.setLayoutManager(new LinearLayoutManager(this));
             categoryChannelAdapter = new ChannelAdapter(new ArrayList<>(), channel -> { showPage(1); play(channel); });
@@ -139,9 +148,16 @@ public final class MainActivity extends AppCompatActivity {
             RecyclerView categories = findViewById(R.id.category_list);
             categories.setLayoutManager(new LinearLayoutManager(this));
             categories.setAdapter(new TextListAdapter(new ArrayList<>(groups), this::selectCategory));
+            latencyTester.measureAll(allChannels, this::refreshChannelLatency);
         } catch (Exception error) {
             Toast.makeText(this, "频道载入失败：" + error.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void refreshChannelLatency(Channel channel) {
+        if (liveAdapter != null) liveAdapter.refresh(channel);
+        if (mobileDrawerAdapter != null) mobileDrawerAdapter.refresh(channel);
+        if (categoryChannelAdapter != null) categoryChannelAdapter.refresh(channel);
     }
 
     private void selectCategory(String group) {
@@ -215,8 +231,32 @@ public final class MainActivity extends AppCompatActivity {
         findViewById(R.id.mobile_channel_drawer).setVisibility(View.GONE);
     }
     private void releasePlayer() { if (player != null) { player.stop(); player.clearMediaItems(); player.release(); player = null; playerView.setPlayer(null); } }
-    @Override protected void onStop() { super.onStop(); if (!isChangingConfigurations()) releasePlayer(); }
-    @Override protected void onDestroy() { releasePlayer(); super.onDestroy(); }
+    @Override public void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (!BuildConfig.TV_UI && player != null && player.getMediaItemCount() > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            hideMobileChannelDrawer();
+            enteringPictureInPicture = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PictureInPictureParams params = new PictureInPictureParams.Builder()
+                    .setAspectRatio(new Rational(16, 9)).build();
+                if (!enterPictureInPictureMode(params)) enteringPictureInPicture = false;
+            } else {
+                enterPictureInPictureMode();
+            }
+        }
+    }
+
+    @Override public void onPictureInPictureModeChanged(boolean inPictureInPictureMode, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(inPictureInPictureMode, newConfig);
+        enteringPictureInPicture = inPictureInPictureMode;
+    }
+
+    @Override protected void onStop() {
+        super.onStop();
+        boolean pip = !BuildConfig.TV_UI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && (isInPictureInPictureMode() || enteringPictureInPicture);
+        if (!isChangingConfigurations() && !pip) releasePlayer();
+    }
+    @Override protected void onDestroy() { latencyTester.close(); releasePlayer(); super.onDestroy(); }
     @SuppressWarnings("deprecation")
     @Override public void onBackPressed() {
         if (!BuildConfig.TV_UI && mobileDrawerVisible) {

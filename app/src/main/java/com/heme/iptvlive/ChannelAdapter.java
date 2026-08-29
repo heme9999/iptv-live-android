@@ -25,13 +25,19 @@ final class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.Holder> {
         notifyDataSetChanged();
     }
 
+    void refresh(Channel channel) {
+        int index = channels.indexOf(channel);
+        if (index >= 0) notifyItemChanged(index);
+    }
+
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
         return new Holder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_channel, parent, false));
     }
 
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {
         Channel channel = channels.get(position);
-        holder.name.setText(channel.group + "  ·  " + channel.name);
+        String latency = channel.latencyMs == -2 ? "测速中" : channel.latencyMs < 0 ? "超时" : channel.latencyMs + " ms";
+        holder.name.setText(channel.group + "  ·  " + channel.name + "\n" + latency);
         holder.itemView.setSelected(position == selected);
         holder.itemView.setOnClickListener(v -> {
             int old = selected;
