@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -154,13 +155,25 @@ public final class MainActivity extends AppCompatActivity {
             categoryChannels.setAdapter(categoryChannelAdapter);
             Set<String> groups = new LinkedHashSet<>();
             for (Channel channel : allChannels) groups.add(channel.group);
+            List<String> orderedGroups = new ArrayList<>(groups);
+            Collections.sort(orderedGroups, (left, right) -> {
+                int priority = Integer.compare(categoryPriority(left), categoryPriority(right));
+                return priority != 0 ? priority : left.compareTo(right);
+            });
             RecyclerView categories = findViewById(R.id.category_list);
             categories.setLayoutManager(new LinearLayoutManager(this));
-            categories.setAdapter(new TextListAdapter(new ArrayList<>(groups), this::selectCategory));
+            categories.setAdapter(new TextListAdapter(orderedGroups, this::selectCategory));
             latencyTester.measureAll(allChannels, this::refreshChannelLatency);
         } catch (Exception error) {
             Toast.makeText(this, "频道载入失败：" + error.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private int categoryPriority(String group) {
+        String[] orderedKeywords = {"国际", "日本", "台湾", "港澳", "粤语", "自然", "纪实", "体育", "影视", "央视"};
+        int[] priorities = {0, 1, 2, 3, 3, 4, 4, 5, 6, 7};
+        for (int i = 0; i < orderedKeywords.length; i++) if (group.contains(orderedKeywords[i])) return priorities[i];
+        return 100;
     }
 
     private void refreshChannelLatency(Channel channel) {
