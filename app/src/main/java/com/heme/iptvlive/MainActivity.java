@@ -34,6 +34,7 @@ public final class MainActivity extends AppCompatActivity {
     private List<Channel> allChannels = new ArrayList<>();
     private ChannelAdapter categoryChannelAdapter;
     private SharedPreferences preferences;
+    private boolean mobilePlayerFullscreen;
 
     @Override protected void onCreate(@Nullable Bundle state) {
         super.onCreate(state);
@@ -145,6 +146,7 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void showPage(int index) {
+        if (!BuildConfig.TV_UI && index != 1) exitMobilePlayerFullscreen();
         for (int i = 0; i < pages.size(); i++) pages.get(i).setVisibility(i == index ? View.VISIBLE : View.GONE);
         int[] navIds = {R.id.nav_home, R.id.nav_live, R.id.nav_categories, R.id.nav_settings};
         for (int i = 0; i < navIds.length; i++) findViewById(navIds[i]).setSelected(i == index);
@@ -163,10 +165,41 @@ public final class MainActivity extends AppCompatActivity {
         ensurePlayer();
         preferences.edit().putString("last_url", channel.url).putString("last_name", channel.name).apply();
         player.setMediaItem(MediaItem.fromUri(Uri.parse(channel.url))); player.prepare(); player.play();
+        if (!BuildConfig.TV_UI) enterMobilePlayerFullscreen();
+    }
+
+    private void enterMobilePlayerFullscreen() {
+        mobilePlayerFullscreen = true;
+        findViewById(R.id.nav_rail).setVisibility(View.GONE);
+        findViewById(R.id.sidebar).setVisibility(View.GONE);
+        findViewById(R.id.page_container).setLayoutParams(
+            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        playerView.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        getWindow().getDecorView().setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }
+
+    private void exitMobilePlayerFullscreen() {
+        if (!mobilePlayerFullscreen) return;
+        mobilePlayerFullscreen = false;
+        findViewById(R.id.nav_rail).setVisibility(View.VISIBLE);
+        findViewById(R.id.sidebar).setVisibility(View.VISIBLE);
+        playerView.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.2f));
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
     }
     private void releasePlayer() { if (player != null) { player.stop(); player.clearMediaItems(); player.release(); player = null; playerView.setPlayer(null); } }
     @Override protected void onStop() { super.onStop(); if (!isChangingConfigurations()) releasePlayer(); }
     @Override protected void onDestroy() { releasePlayer(); super.onDestroy(); }
+    @SuppressWarnings("deprecation")
+    @Override public void onBackPressed() {
+        if (!BuildConfig.TV_UI && mobilePlayerFullscreen) {
+            exitMobilePlayerFullscreen();
+            return;
+        }
+        super.onBackPressed();
+    }
     @Override public boolean onKeyLongPress(int keyCode, KeyEvent event) { if (keyCode == KeyEvent.KEYCODE_MENU) { UpdateChecker.check(this, true); return true; } return super.onKeyLongPress(keyCode, event); }
     @Override public void onConfigurationChanged(Configuration newConfig) { super.onConfigurationChanged(newConfig); }
 }
