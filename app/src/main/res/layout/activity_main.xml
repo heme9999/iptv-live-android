@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#070B12"
+    android:orientation="horizontal">
+    <LinearLayout
+        android:id="@+id/sidebar"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:background="#0B121D"
+        android:orientation="vertical"
+        android:padding="16dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="IPTV LIVE" android:textColor="#78FFF0" android:textSize="22sp" android:textStyle="bold" android:paddingBottom="12dp" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="24dp" />
+    </LinearLayout>
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:keepScreenOn="true"
+        app:show_buffering="when_playing"
+        app:use_controller="true" />
+</LinearLayout>
+
