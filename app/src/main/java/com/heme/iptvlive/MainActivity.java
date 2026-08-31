@@ -58,6 +58,11 @@ public final class MainActivity extends AppCompatActivity {
     private boolean mobileDrawerVisible;
     private boolean enteringPictureInPicture;
     private boolean tvPlayerFullscreen;
+    private Channel currentChannel;
+    private int currentPlayingIndex = 0;
+    private TextListAdapter categoryAdapter;
+    private final List<String> orderedCategoryGroups = new ArrayList<>();
+    private Toast channelToast;
     private final LatencyTester latencyTester = new LatencyTester();
 
     @Override protected void onCreate(@Nullable Bundle state) {
@@ -338,6 +343,8 @@ public final class MainActivity extends AppCompatActivity {
             int priority = Integer.compare(categoryPriority(left), categoryPriority(right));
             return priority != 0 ? priority : left.compareTo(right);
         });
+        orderedCategoryGroups.clear();
+        orderedCategoryGroups.addAll(orderedGroups);
         RecyclerView categories = findViewById(R.id.category_list);
         if (categories != null) {
             if (BuildConfig.TV_UI) {
@@ -345,7 +352,7 @@ public final class MainActivity extends AppCompatActivity {
             } else {
                 categories.setLayoutManager(new GridLayoutManager(this, 3));
             }
-            TextListAdapter categoryAdapter = new TextListAdapter(orderedGroups, this::selectCategory);
+            categoryAdapter = new TextListAdapter(orderedGroups, this::selectCategory);
             categories.setAdapter(categoryAdapter);
             if (!orderedGroups.isEmpty()) {
                 categoryAdapter.setSelected(0);
@@ -447,6 +454,13 @@ public final class MainActivity extends AppCompatActivity {
 
     private void play(Channel channel) {
         ensurePlayer();
+        currentChannel = channel;
+        for (int i = 0; i < allChannels.size(); i++) {
+            if (allChannels.get(i).url.equals(channel.url)) {
+                currentPlayingIndex = i;
+                break;
+            }
+        }
         preferences.edit().putString("last_url", channel.url).putString("last_name", channel.name).apply();
 
         MediaItem.Builder mediaItemBuilder = new MediaItem.Builder().setUri(Uri.parse(channel.url));
@@ -466,6 +480,41 @@ public final class MainActivity extends AppCompatActivity {
             enterTvPlayerFullscreen();
         } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             enterMobilePlayerFullscreen();
+        }
+    }
+
+    private void showChannelToast(Channel channel) {
+        if (channelToast != null) {
+            channelToast.cancel();
+        }
+        channelToast = Toast.makeText(this, "▶ " + channel.name + " (" + channel.group + ")", Toast.LENGTH_SHORT);
+        channelToast.show();
+    }
+
+    private void playNextChannel() {
+        if (allChannels.isEmpty()) return;
+        currentPlayingIndex = (currentPlayingIndex + 1) % allChannels.size();
+        Channel next = allChannels.get(currentPlayingIndex);
+        play(next);
+        showChannelToast(next);
+    }
+
+    private void playPreviousChannel() {
+        if (allChannels.isEmpty()) return;
+        currentPlayingIndex = (currentPlayingIndex - 1 + allChannels.size()) % allChannels.size();
+        Channel prev = allChannels.get(currentPlayingIndex);
+        play(prev);
+        showChannelToast(prev);
+    }
+
+    private void showCategoryForCurrentChannel() {
+        showPage(2);
+        if (currentChannel != null && !orderedCategoryGroups.isEmpty()) {
+            int idx = orderedCategoryGroups.indexOf(currentChannel.group);
+            if (idx >= 0 && categoryAdapter != null) {
+                categoryAdapter.setSelected(idx);
+                selectCategory(currentChannel.group);
+            }
         }
     }
 
@@ -519,15 +568,40 @@ public final class MainActivity extends AppCompatActivity {
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (BuildConfig.TV_UI && pages.get(1).getVisibility() == View.VISIBLE) {
-                if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (BuildConfig.TV_UI) {
+                if (pages.size() > 1 && pages.get(1).getVisibility() == View.VISIBLE) {
                     if (tvPlayerFullscreen) {
-                        exitTvPlayerFullscreen();
+                        if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP || event.getKeyCode() == KeyEvent.KEYCODE_CHANNEL_UP || event.getKeyCode() == KeyEvent.KEYCODE_PAGE_UP) {
+                            playPreviousChannel();
+                            return true;
+                        }
+                        if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN || event.getKeyCode() == KeyEvent.KEYCODE_CHANNEL_DOWN || event.getKeyCode() == KeyEvent.KEYCODE_PAGE_DOWN) {
+                            playNextChannel();
+                            return true;
+                        }
+                        if (event.getKeyCode() == KeyEvent.KEYCODE_MENU || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                            exitTvPlayerFullscreen();
+                            return true;
+                        }
+                        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+                            exitTvPlayerFullscreen();
+                            showCategoryForCurrentChannel();
+                            return true;
+                        }
+                    } else {
+                        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+                            showCategoryForCurrentChannel();
+                            return true;
+                        }
+                    }
+                } else if (pages.size() > 2 && pages.get(2).getVisibility() == View.VISIBLE) {
+                    if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+                        showPage(0);
                         return true;
                     }
-                } else if (event.getKeyCode() == KeyEvent.KEYCODE_MENU || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-                    if (tvPlayerFullscreen) {
-                        exitTvPlayerFullscreen();
+                } else if (pages.size() > 3 && pages.get(3).getVisibility() == View.VISIBLE) {
+                    if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+                        showPage(0);
                         return true;
                     }
                 }
@@ -539,6 +613,7 @@ public final class MainActivity extends AppCompatActivity {
                         return true;
                     }
                     exitMobilePlayerFullscreen();
+                    showCategoryForCurrentChannel();
                     return true;
                 }
                 if (event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
