@@ -90,16 +90,16 @@ public final class MainActivity extends AppCompatActivity {
             LinearLayout livePage = findViewById(R.id.page_live);
             LinearLayout sidebar = findViewById(R.id.sidebar);
             livePage.setOrientation(LinearLayout.VERTICAL);
-            sidebar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-            playerView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.2f));
+            sidebar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.4f));
+            playerView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
             LinearLayout categoryPage = findViewById(R.id.page_categories);
             categoryPage.setOrientation(LinearLayout.VERTICAL);
             View groupPane = categoryPage.getChildAt(0);
             View channelPane = categoryPage.getChildAt(1);
-            groupPane.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.8f));
-            LinearLayout.LayoutParams channelParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.2f);
-            channelParams.topMargin = dp(16);
+            groupPane.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout.LayoutParams channelParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+            channelParams.topMargin = dp(8);
             channelPane.setLayoutParams(channelParams);
             playerView.setOnTouchListener((view, event) -> {
                 if (event.getAction() == MotionEvent.ACTION_UP && mobilePlayerFullscreen) {
@@ -140,6 +140,13 @@ public final class MainActivity extends AppCompatActivity {
     private void loadChannels() {
         try {
             allChannels = M3uParser.fromAssets(this);
+            // Sort allChannels so that Live list, Home list and Drawer all follow the exact category priority order!
+            Collections.sort(allChannels, (left, right) -> {
+                int pLeft = categoryPriority(left.group);
+                int pRight = categoryPriority(right.group);
+                if (pLeft != pRight) return Integer.compare(pLeft, pRight);
+                return 0;
+            });
             RecyclerView live = findViewById(R.id.channels);
             live.setLayoutManager(new LinearLayoutManager(this));
             liveAdapter = new ChannelAdapter(allChannels, this::play);
@@ -166,8 +173,17 @@ public final class MainActivity extends AppCompatActivity {
                 return priority != 0 ? priority : left.compareTo(right);
             });
             RecyclerView categories = findViewById(R.id.category_list);
-            categories.setLayoutManager(new LinearLayoutManager(this));
-            categories.setAdapter(new TextListAdapter(orderedGroups, this::selectCategory));
+            if (BuildConfig.TV_UI) {
+                categories.setLayoutManager(new LinearLayoutManager(this));
+            } else {
+                categories.setLayoutManager(new GridLayoutManager(this, 3));
+            }
+            TextListAdapter categoryAdapter = new TextListAdapter(orderedGroups, this::selectCategory);
+            categories.setAdapter(categoryAdapter);
+            if (!orderedGroups.isEmpty()) {
+                categoryAdapter.setSelected(0);
+                selectCategory(orderedGroups.get(0));
+            }
             latencyTester.measureAll(allChannels, this::refreshChannelLatency);
         } catch (Exception error) {
             Toast.makeText(this, "频道载入失败：" + error.getMessage(), Toast.LENGTH_LONG).show();
@@ -175,8 +191,8 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private int categoryPriority(String group) {
-        String[] orderedKeywords = {"国际", "日本", "台湾", "港澳", "粤语", "自然", "纪实", "体育", "影视", "央视"};
-        int[] priorities = {0, 1, 2, 3, 3, 4, 4, 5, 6, 7};
+        String[] orderedKeywords = {"国际", "日本", "台湾", "港澳", "粤语", "自然", "纪实", "体育", "影视", "央视", "卫视"};
+        int[] priorities = {0, 1, 2, 3, 3, 4, 4, 5, 6, 7, 8};
         for (int i = 0; i < orderedKeywords.length; i++) if (group.contains(orderedKeywords[i])) return priorities[i];
         return 100;
     }
