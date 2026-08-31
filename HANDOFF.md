@@ -1,10 +1,10 @@
 # My IPTV 开发交接说明
 
-交接基线：`v6.0.13` / commit `7847b6d`
+交接基线：`v6.0.21` / commit `b758153`
 
 GitHub：<https://github.com/heme9999/iptv-live-android>
 
-最新 Release：<https://github.com/heme9999/iptv-live-android/releases/tag/v6.0.13>
+最新 Release：<https://github.com/heme9999/iptv-live-android/releases/tag/v6.0.21>
 
 ## 1. 项目目标与当前状态
 
@@ -14,19 +14,20 @@ GitHub：<https://github.com/heme9999/iptv-live-android>
 - Sony BRAVIA：包名 `com.heme.iptvlive.sony`
 - Pixel 手机：包名 `com.heme.iptvlive.pixel`
 
-当前版本码 `613`，版本名 `6.0.13`，最低 Android 6.0（API 23），使用 Java 17、Android Gradle Plugin、AndroidX Media3/ExoPlayer。
+当前版本码 `621`，版本名 `6.0.21`，最低 Android 6.0（API 23），使用 Java 17、Android Gradle Plugin、AndroidX Media3/ExoPlayer。
 
 当前已实现：
 
 - 主页、直播、分类、设置。
-- 内置 M3U 播放源与频道延时测速。
+- 内置 M3U 播放源与云端全球 CDN 订阅源，支持「🔄 一键刷新播放清单」无需升级 App 即可热重载。
+- 支持手工「自定义添加 / 更换 M3U 播放源」与「一键恢复默认播放源」。
+- ExoPlayer 播放内核全面支持跨协议重定向（HTTP ➔ HTTPS）、M3U8 格式自动探测与 iOS/APTV 原生请求头。
 - TCL/Sony 遥控器焦点导航；选台后隐藏菜单，全屏播放；确定、菜单或返回键呼回菜单。
 - Pixel 竖屏为上方视频、下方频道信息和频道列表；横屏全屏时点击画面呼出左侧频道菜单。
-- 仅 Pixel 支持系统画中画；电视版不得增加画中画。
-- Activity 离开前台时释放播放器，避免退出后后台继续播放（画中画状态除外）。
+- 仅 Pixel 支持系统画中画（PiP）；退出/关闭小窗时硬件级 0 毫秒立即释放播放器与音频焦点。
+- 频道条目异步显示连接延时或超时状态。
 - GitHub Releases 在线检查、下载和安装对应设备 APK。
-- 三端名称统一为 My IPTV，新蓝紫电视播放图标已接入。
-- 设置页和主菜单已增加高对比度焦点样式。
+- 三端品牌与极简现代深蓝晶透图标接入。
 
 ## 2. 在新电脑恢复项目
 
