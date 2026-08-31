@@ -570,9 +570,21 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void releasePlayer() {
+        if (player != null) {
+            player.stop();
+            player.clearMediaItems();
+            player.release();
+            player = null;
+            if (playerView != null) {
+                playerView.setPlayer(null);
+            }
+        }
+    }
+
     @Override protected void onUserLeaveHint() {
         super.onUserLeaveHint();
-        if (!BuildConfig.TV_UI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && player != null && player.isPlaying()) {
+        if (!BuildConfig.TV_UI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && player != null && player.isPlaying() && pages.size() > 1 && pages.get(1).getVisibility() == View.VISIBLE) {
             try {
                 enteringPictureInPicture = true;
                 enterPictureInPictureMode(new PictureInPictureParams.Builder().setAspectRatio(new Rational(16, 9)).build());
@@ -582,18 +594,42 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        enteringPictureInPicture = false;
+        if (!isInPictureInPictureMode) {
+            if (isFinishing() || isDestroyed()) {
+                releasePlayer();
+            }
+        }
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (!isInPictureInPictureMode() && !enteringPictureInPicture) {
+                if (player != null) {
+                    player.pause();
+                }
+            }
+        } else {
+            if (player != null) {
+                player.pause();
+            }
+        }
+    }
+
     @Override protected void onStop() {
         super.onStop();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode()) {
-            if (enteringPictureInPicture) {
-                enteringPictureInPicture = false;
-                return;
-            }
+            return;
         }
-        if (player != null) {
-            player.stop();
-            player.release();
-            player = null;
-        }
+        releasePlayer();
+    }
+
+    @Override protected void onDestroy() {
+        super.onDestroy();
+        releasePlayer();
+        latencyTester.close();
     }
 }
