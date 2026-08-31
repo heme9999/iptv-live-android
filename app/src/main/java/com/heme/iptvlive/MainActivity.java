@@ -12,11 +12,14 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.media3.common.MediaItem;
@@ -58,6 +61,7 @@ public final class MainActivity extends AppCompatActivity {
         pages.add(findViewById(R.id.page_live));
         pages.add(findViewById(R.id.page_categories));
         pages.add(findViewById(R.id.page_settings));
+        initAdapters();
         configureDeviceLayout();
         configureNavigation();
         configureSettings();
@@ -65,6 +69,31 @@ public final class MainActivity extends AppCompatActivity {
         String start = preferences.getString("startup_page", "主页");
         showPage("直播".equals(start) ? 1 : "分类".equals(start) ? 2 : 0);
         UpdateChecker.check(this, false);
+    }
+
+    private void initAdapters() {
+        RecyclerView live = findViewById(R.id.channels);
+        live.setLayoutManager(new LinearLayoutManager(this));
+        liveAdapter = new ChannelAdapter(new ArrayList<>(), this::play);
+        live.setAdapter(liveAdapter);
+        RecyclerView homeChannels = findViewById(R.id.home_channels);
+        if (homeChannels != null) {
+            homeChannels.setLayoutManager(new GridLayoutManager(this, BuildConfig.TV_UI ? 4 : 2));
+            homeAdapter = new ChannelAdapter(new ArrayList<>(), channel -> { showPage(1); play(channel); });
+            homeChannels.setAdapter(homeAdapter);
+        }
+        RecyclerView mobileDrawer = findViewById(R.id.mobile_drawer_channels);
+        if (mobileDrawer != null) {
+            mobileDrawer.setLayoutManager(new LinearLayoutManager(this));
+            mobileDrawerAdapter = new ChannelAdapter(new ArrayList<>(), channel -> { play(channel); hideMobileChannelDrawer(); });
+            mobileDrawer.setAdapter(mobileDrawerAdapter);
+        }
+        RecyclerView categoryChannels = findViewById(R.id.category_channels);
+        if (categoryChannels != null) {
+            categoryChannels.setLayoutManager(new LinearLayoutManager(this));
+            categoryChannelAdapter = new ChannelAdapter(new ArrayList<>(), channel -> { showPage(1); play(channel); });
+            categoryChannels.setAdapter(categoryChannelAdapter);
+        }
     }
 
     private void configureDeviceLayout() {
@@ -132,47 +161,120 @@ public final class MainActivity extends AppCompatActivity {
         for (int i = 0; i < START_PAGES.length; i++) if (START_PAGES[i].equals(saved)) startup.setSelection(i);
         startup.setOnItemSelectedListener(new SimpleItemSelectedListener(position -> preferences.edit().putString("startup_page", START_PAGES[position]).apply()));
         SwitchCompat autoplay = findViewById(R.id.autoplay);
-        autoplay.setChecked(preferences.getBoolean("autoplay", false));
-        autoplay.setOnCheckedChangeListener((button, checked) -> preferences.edit().putBoolean("autoplay", checked).apply());
+        if (autoplay != null) {
+            autoplay.setChecked(preferences.getBoolean("autoplay", false));
+            autoplay.setOnCheckedChangeListener((button, checked) -> preferences.edit().putBoolean("autoplay", checked).apply());
+        }
+        View btnEditSource = findViewById(R.id.btn_edit_source);
+        if (btnEditSource != null) btnEditSource.setOnClickListener(v -> showEditSourceDialog());
+        View btnResetSource = findViewById(R.id.btn_reset_source);
+        if (btnResetSource != null) btnResetSource.setOnClickListener(v -> resetToDefaultSource());
         findViewById(R.id.check_update).setOnClickListener(v -> UpdateChecker.check(this, true));
+        updateSourceStatusDisplay();
     }
 
-    private void loadChannels() {
-        try {
-            allChannels = M3uParser.fromAssets(this);
-            // Sort allChannels so that Live list, Home list and Drawer all follow the exact category priority order!
-            Collections.sort(allChannels, (left, right) -> {
-                int pLeft = categoryPriority(left.group);
-                int pRight = categoryPriority(right.group);
-                if (pLeft != pRight) return Integer.compare(pLeft, pRight);
-                return 0;
-            });
-            RecyclerView live = findViewById(R.id.channels);
-            live.setLayoutManager(new LinearLayoutManager(this));
-            liveAdapter = new ChannelAdapter(allChannels, this::play);
-            live.setAdapter(liveAdapter);
-            RecyclerView homeChannels = findViewById(R.id.home_channels);
-            if (homeChannels != null) {
-                homeChannels.setLayoutManager(new GridLayoutManager(this, BuildConfig.TV_UI ? 4 : 2));
-                homeAdapter = new ChannelAdapter(allChannels, channel -> { showPage(1); play(channel); });
-                homeChannels.setAdapter(homeAdapter);
+    private void updateSourceStatusDisplay() {
+        TextView status = findViewById(R.id.source_status);
+        if (status != null) {
+            String customUrl = preferences.getString("custom_m3u_url", null);
+            if (customUrl != null && !customUrl.trim().isEmpty()) {
+                status.setText("当前播放源：自定义订阅链接（" + allChannels.size() + " 个频道）\n" + customUrl);
+            } else {
+                status.setText("当前播放源：官方内置高质量源（" + allChannels.size() + " 个频道）");
             }
-            RecyclerView mobileDrawer = findViewById(R.id.mobile_drawer_channels);
-            mobileDrawer.setLayoutManager(new LinearLayoutManager(this));
-            mobileDrawerAdapter = new ChannelAdapter(allChannels, channel -> { play(channel); hideMobileChannelDrawer(); });
-            mobileDrawer.setAdapter(mobileDrawerAdapter);
-            RecyclerView categoryChannels = findViewById(R.id.category_channels);
-            categoryChannels.setLayoutManager(new LinearLayoutManager(this));
-            categoryChannelAdapter = new ChannelAdapter(new ArrayList<>(), channel -> { showPage(1); play(channel); });
-            categoryChannels.setAdapter(categoryChannelAdapter);
-            Set<String> groups = new LinkedHashSet<>();
-            for (Channel channel : allChannels) groups.add(channel.group);
-            List<String> orderedGroups = new ArrayList<>(groups);
-            Collections.sort(orderedGroups, (left, right) -> {
-                int priority = Integer.compare(categoryPriority(left), categoryPriority(right));
-                return priority != 0 ? priority : left.compareTo(right);
-            });
-            RecyclerView categories = findViewById(R.id.category_list);
+        }
+    }
+
+    private void showEditSourceDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("自定义播放源");
+        builder.setMessage("请输入 M3U 播放源订阅链接（HTTP / HTTPS）：");
+        final EditText input = new EditText(this);
+        input.setHint("https://raw.githubusercontent.com/.../live.m3u");
+        input.setTextColor(0xFFF5F7FB);
+        input.setHintTextColor(0xFF8490A3);
+        input.setBackgroundResource(R.drawable.setting_control_background);
+        int pad = dp(14);
+        input.setPadding(pad, pad, pad, pad);
+        String currentUrl = preferences.getString("custom_m3u_url", "");
+        if (currentUrl != null && !currentUrl.isEmpty()) {
+            input.setText(currentUrl);
+            input.setSelection(currentUrl.length());
+        }
+        FrameLayout container = new FrameLayout(this);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = dp(20);
+        params.rightMargin = dp(20);
+        params.topMargin = dp(10);
+        params.bottomMargin = dp(10);
+        input.setLayoutParams(params);
+        container.addView(input);
+        builder.setView(container);
+
+        builder.setPositiveButton("测试并应用", (dialog, which) -> {
+            String newUrl = input.getText().toString().trim();
+            if (newUrl.isEmpty()) {
+                Toast.makeText(this, "链接不能为空", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
+                Toast.makeText(this, "请输入以 http:// 或 https:// 开头的有效链接", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(this, "正在拉取并解析播放源...", Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                try {
+                    List<Channel> fetched = M3uParser.fromUrl(newUrl);
+                    runOnUiThread(() -> {
+                        preferences.edit().putString("custom_m3u_url", newUrl).apply();
+                        applyNewChannels(fetched);
+                        Toast.makeText(this, "播放源更新成功！共加载 " + fetched.size() + " 个频道", Toast.LENGTH_LONG).show();
+                    });
+                } catch (Exception err) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "解析失败：" + err.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+                }
+            }).start();
+        });
+
+        builder.setNegativeButton("取消", null);
+        builder.setNeutralButton("恢复默认源", (dialog, which) -> resetToDefaultSource());
+        builder.show();
+    }
+
+    private void resetToDefaultSource() {
+        preferences.edit().remove("custom_m3u_url").apply();
+        Toast.makeText(this, "正在重新加载官方内置源...", Toast.LENGTH_SHORT).show();
+        try {
+            List<Channel> defaultChannels = M3uParser.fromAssets(this);
+            applyNewChannels(defaultChannels);
+            Toast.makeText(this, "已恢复为官方内置播放源（" + defaultChannels.size() + " 个频道）", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "恢复默认源失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void applyNewChannels(List<Channel> channels) {
+        Collections.sort(channels, (left, right) -> {
+            int pLeft = categoryPriority(left.group);
+            int pRight = categoryPriority(right.group);
+            if (pLeft != pRight) return Integer.compare(pLeft, pRight);
+            return 0;
+        });
+        allChannels = channels;
+        if (liveAdapter != null) liveAdapter.replace(allChannels);
+        if (homeAdapter != null) homeAdapter.replace(allChannels);
+        if (mobileDrawerAdapter != null) mobileDrawerAdapter.replace(allChannels);
+        Set<String> groups = new LinkedHashSet<>();
+        for (Channel channel : allChannels) groups.add(channel.group);
+        List<String> orderedGroups = new ArrayList<>(groups);
+        Collections.sort(orderedGroups, (left, right) -> {
+            int priority = Integer.compare(categoryPriority(left), categoryPriority(right));
+            return priority != 0 ? priority : left.compareTo(right);
+        });
+        RecyclerView categories = findViewById(R.id.category_list);
+        if (categories != null) {
             if (BuildConfig.TV_UI) {
                 categories.setLayoutManager(new LinearLayoutManager(this));
             } else {
@@ -184,9 +286,33 @@ public final class MainActivity extends AppCompatActivity {
                 categoryAdapter.setSelected(0);
                 selectCategory(orderedGroups.get(0));
             }
-            latencyTester.measureAll(allChannels, this::refreshChannelLatency);
-        } catch (Exception error) {
-            Toast.makeText(this, "频道载入失败：" + error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        updateSourceStatusDisplay();
+        latencyTester.measureAll(allChannels, this::refreshChannelLatency);
+    }
+
+    private void loadChannels() {
+        String customUrl = preferences.getString("custom_m3u_url", null);
+        if (customUrl != null && !customUrl.trim().isEmpty()) {
+            new Thread(() -> {
+                try {
+                    List<Channel> fetched = M3uParser.fromUrl(customUrl);
+                    runOnUiThread(() -> applyNewChannels(fetched));
+                } catch (Exception e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "自定义源拉取失败，已使用内置源备用", Toast.LENGTH_SHORT).show();
+                        try {
+                            applyNewChannels(M3uParser.fromAssets(this));
+                        } catch (Exception ignore) {}
+                    });
+                }
+            }).start();
+        } else {
+            try {
+                applyNewChannels(M3uParser.fromAssets(this));
+            } catch (Exception error) {
+                Toast.makeText(this, "频道载入失败：" + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -244,10 +370,6 @@ public final class MainActivity extends AppCompatActivity {
             enterTvPlayerFullscreen();
         } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             enterMobilePlayerFullscreen();
-        } else {
-            exitMobilePlayerFullscreen();
-            findViewById(R.id.nav_rail).setVisibility(View.VISIBLE);
-            findViewById(R.id.sidebar).setVisibility(View.VISIBLE);
         }
     }
 
@@ -259,39 +381,30 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void exitTvPlayerFullscreen() {
-        if (!tvPlayerFullscreen) return;
         tvPlayerFullscreen = false;
         findViewById(R.id.nav_rail).setVisibility(View.VISIBLE);
         findViewById(R.id.sidebar).setVisibility(View.VISIBLE);
-        RecyclerView channels = findViewById(R.id.channels);
-        channels.post(() -> {
-            RecyclerView.ViewHolder holder = channels.findViewHolderForAdapterPosition(0);
-            if (holder != null) holder.itemView.requestFocus(); else channels.requestFocus();
-        });
+    }
+
+    private void toggleTvPlayerMenu() {
+        if (tvPlayerFullscreen) {
+            exitTvPlayerFullscreen();
+        } else {
+            enterTvPlayerFullscreen();
+        }
     }
 
     private void enterMobilePlayerFullscreen() {
         mobilePlayerFullscreen = true;
-        hideMobileChannelDrawer();
         findViewById(R.id.nav_rail).setVisibility(View.GONE);
         findViewById(R.id.sidebar).setVisibility(View.GONE);
-        findViewById(R.id.page_container).setLayoutParams(
-            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        playerView.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        getWindow().getDecorView().setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
     private void exitMobilePlayerFullscreen() {
-        if (!mobilePlayerFullscreen) return;
-        hideMobileChannelDrawer();
         mobilePlayerFullscreen = false;
+        hideMobileChannelDrawer();
         findViewById(R.id.nav_rail).setVisibility(View.VISIBLE);
         findViewById(R.id.sidebar).setVisibility(View.VISIBLE);
-        playerView.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.2f));
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
     }
 
     private void toggleMobileChannelDrawer() {
@@ -307,63 +420,93 @@ public final class MainActivity extends AppCompatActivity {
         mobileDrawerVisible = false;
         findViewById(R.id.mobile_channel_drawer).setVisibility(View.GONE);
     }
-    private void releasePlayer() { if (player != null) { player.stop(); player.clearMediaItems(); player.release(); player = null; playerView.setPlayer(null); } }
-    @Override public void onUserLeaveHint() {
-        super.onUserLeaveHint();
-        if (!BuildConfig.TV_UI && player != null && player.getMediaItemCount() > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            hideMobileChannelDrawer();
-            enteringPictureInPicture = true;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                PictureInPictureParams params = new PictureInPictureParams.Builder()
-                    .setAspectRatio(new Rational(16, 9)).build();
-                if (!enterPictureInPictureMode(params)) enteringPictureInPicture = false;
+
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            if (BuildConfig.TV_UI && pages.get(1).getVisibility() == View.VISIBLE) {
+                if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+                    if (tvPlayerFullscreen) {
+                        exitTvPlayerFullscreen();
+                        return true;
+                    }
+                } else if (event.getKeyCode() == KeyEvent.KEYCODE_MENU || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                    if (tvPlayerFullscreen) {
+                        exitTvPlayerFullscreen();
+                        return true;
+                    }
+                }
+            }
+            if (!BuildConfig.TV_UI && mobilePlayerFullscreen) {
+                if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+                    if (mobileDrawerVisible) {
+                        hideMobileChannelDrawer();
+                        return true;
+                    }
+                    exitMobilePlayerFullscreen();
+                    return true;
+                }
+                if (event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
+                    toggleMobileChannelDrawer();
+                    return true;
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (!BuildConfig.TV_UI && mobilePlayerFullscreen && ev.getAction() == MotionEvent.ACTION_UP) {
+            boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+            if (landscape) {
+                int drawerWidth = dp(310);
+                if (mobileDrawerVisible && ev.getX() > drawerWidth) {
+                    hideMobileChannelDrawer();
+                    return true;
+                }
+                if (!mobileDrawerVisible && ev.getX() <= dp(48)) {
+                    showMobileChannelDrawer();
+                    return true;
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (!BuildConfig.TV_UI) {
+            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                if (pages.get(1).getVisibility() == View.VISIBLE) enterMobilePlayerFullscreen();
             } else {
-                enterPictureInPictureMode();
+                exitMobilePlayerFullscreen();
             }
         }
     }
 
-    @Override public void onPictureInPictureModeChanged(boolean inPictureInPictureMode, Configuration newConfig) {
-        super.onPictureInPictureModeChanged(inPictureInPictureMode, newConfig);
-        enteringPictureInPicture = inPictureInPictureMode;
+    @Override protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (!BuildConfig.TV_UI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && player != null && player.isPlaying()) {
+            try {
+                enteringPictureInPicture = true;
+                enterPictureInPictureMode(new PictureInPictureParams.Builder().setAspectRatio(new Rational(16, 9)).build());
+            } catch (Exception ignored) {
+                enteringPictureInPicture = false;
+            }
+        }
     }
 
     @Override protected void onStop() {
         super.onStop();
-        boolean pip = !BuildConfig.TV_UI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && (isInPictureInPictureMode() || enteringPictureInPicture);
-        if (!isChangingConfigurations() && !pip) releasePlayer();
-    }
-    @Override protected void onDestroy() { latencyTester.close(); releasePlayer(); super.onDestroy(); }
-    @SuppressWarnings("deprecation")
-    @Override public void onBackPressed() {
-        if (BuildConfig.TV_UI && tvPlayerFullscreen) {
-            exitTvPlayerFullscreen();
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode()) {
+            if (enteringPictureInPicture) {
+                enteringPictureInPicture = false;
+                return;
+            }
         }
-        if (!BuildConfig.TV_UI && mobileDrawerVisible) {
-            hideMobileChannelDrawer();
-            return;
-        }
-        if (!BuildConfig.TV_UI && mobilePlayerFullscreen) {
-            exitMobilePlayerFullscreen();
-            return;
-        }
-        super.onBackPressed();
-    }
-    @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (BuildConfig.TV_UI && tvPlayerFullscreen &&
-            (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_MENU)) {
-            exitTvPlayerFullscreen();
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-    @Override public boolean onKeyLongPress(int keyCode, KeyEvent event) { if (keyCode == KeyEvent.KEYCODE_MENU) { UpdateChecker.check(this, true); return true; } return super.onKeyLongPress(keyCode, event); }
-    @Override public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (!BuildConfig.TV_UI && player != null && player.getMediaItemCount() > 0) {
-            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) enterMobilePlayerFullscreen();
-            else exitMobilePlayerFullscreen();
+        if (player != null) {
+            player.stop();
+            player.release();
+            player = null;
         }
     }
 }

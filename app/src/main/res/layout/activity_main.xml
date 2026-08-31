@@ -50,6 +50,12 @@
                 <TextView style="@style/SettingLabel" android:text="启动后进入" />
                 <Spinner android:id="@+id/startup_page" android:layout_width="360dp" android:layout_height="58dp" android:background="@drawable/setting_control_background" android:focusable="true" android:popupBackground="#111C2A" />
                 <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay" android:layout_width="wrap_content" android:layout_height="64dp" android:layout_marginTop="24dp" android:background="@drawable/setting_control_background" android:focusable="true" android:minWidth="520dp" android:paddingLeft="18dp" android:paddingRight="18dp" android:text="进入直播时自动播放第一个频道" android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold" />
+                <TextView style="@style/SettingLabel" android:layout_marginTop="28dp" android:text="播放源管理" />
+                <TextView android:id="@+id/source_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="当前播放源：官方内置源" android:textColor="#8290A3" android:textSize="15sp" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
+                    <Button android:id="@+id/btn_edit_source" style="@style/SettingButton" android:layout_marginEnd="16dp" android:text="添加 / 更换播放源" />
+                    <Button android:id="@+id/btn_reset_source" style="@style/SettingButton" android:text="恢复默认播放源" />
+                </LinearLayout>
                 <Button android:id="@+id/check_update" style="@style/SettingButton" android:layout_marginTop="28dp" android:text="检查软件更新" />
                 <TextView android:id="@+id/settings_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="#8290A3" android:textSize="15sp" />
             </LinearLayout>
