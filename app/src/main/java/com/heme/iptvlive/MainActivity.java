@@ -22,6 +22,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.media3.common.AudioAttributes;
+import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
 import androidx.media3.common.PlaybackException;
@@ -418,8 +420,15 @@ public final class MainActivity extends AppCompatActivity {
             DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(this)
                 .setDataSourceFactory(dataSourceFactory);
 
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                .build();
+
             player = new ExoPlayer.Builder(this)
                 .setMediaSourceFactory(mediaSourceFactory)
+                .setAudioAttributes(audioAttributes, true)
+                .setHandleAudioBecomingNoisy(true)
                 .build();
 
             player.addListener(new Player.Listener() {
@@ -572,12 +581,17 @@ public final class MainActivity extends AppCompatActivity {
 
     private void releasePlayer() {
         if (player != null) {
-            player.stop();
-            player.clearMediaItems();
-            player.release();
-            player = null;
-            if (playerView != null) {
-                playerView.setPlayer(null);
+            try {
+                player.setPlayWhenReady(false);
+                player.stop();
+                player.clearMediaItems();
+                player.release();
+            } catch (Exception ignored) {
+            } finally {
+                player = null;
+                if (playerView != null) {
+                    playerView.setPlayer(null);
+                }
             }
         }
     }
@@ -598,9 +612,17 @@ public final class MainActivity extends AppCompatActivity {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
         enteringPictureInPicture = false;
         if (!isInPictureInPictureMode) {
-            if (isFinishing() || isDestroyed()) {
-                releasePlayer();
-            }
+            // When leaving PiP (whether user closed PiP or dismissed it), kill player instantly!
+            releasePlayer();
+        }
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        enteringPictureInPicture = false;
+        // If returning to foreground and on live tab with no player, restore playback cleanly
+        if (!BuildConfig.TV_UI && player == null && pages.size() > 1 && pages.get(1).getVisibility() == View.VISIBLE) {
+            continueWatching();
         }
     }
 
@@ -609,11 +631,13 @@ public final class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             if (!isInPictureInPictureMode() && !enteringPictureInPicture) {
                 if (player != null) {
+                    player.setPlayWhenReady(false);
                     player.pause();
                 }
             }
         } else {
             if (player != null) {
+                player.setPlayWhenReady(false);
                 player.pause();
             }
         }
