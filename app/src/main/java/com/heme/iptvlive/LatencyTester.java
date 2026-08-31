@@ -24,16 +24,29 @@ final class LatencyTester {
         HttpURLConnection connection = null;
         long started = System.nanoTime();
         try {
-            connection = (HttpURLConnection) new URL(address).openConnection();
-            connection.setConnectTimeout(4_000);
-            connection.setReadTimeout(4_000);
-            connection.setInstanceFollowRedirects(true);
-            connection.setRequestProperty("User-Agent", "IPTV-Live-Android");
-            connection.setRequestProperty("Range", "bytes=0-0");
-            connection.setRequestProperty("Cache-Control", "no-cache");
-            int code = connection.getResponseCode();
-            long elapsed = (System.nanoTime() - started) / 1_000_000L;
-            return code >= 200 && code < 500 ? elapsed : -1L;
+            String currentUrl = address;
+            int redirects = 0;
+            while (redirects < 5) {
+                connection = (HttpURLConnection) new URL(currentUrl).openConnection();
+                connection.setConnectTimeout(3_500);
+                connection.setReadTimeout(3_500);
+                connection.setInstanceFollowRedirects(true);
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 APTV/1.0");
+                connection.setRequestProperty("Cache-Control", "no-cache");
+                int code = connection.getResponseCode();
+                if (code == HttpURLConnection.HTTP_MOVED_PERM || code == HttpURLConnection.HTTP_MOVED_TEMP || code == 307 || code == 308) {
+                    String loc = connection.getHeaderField("Location");
+                    if (loc != null && !loc.isEmpty()) {
+                        connection.disconnect();
+                        currentUrl = loc;
+                        redirects++;
+                        continue;
+                    }
+                }
+                long elapsed = (System.nanoTime() - started) / 1_000_000L;
+                return (code >= 200 && code < 400) ? elapsed : -1L;
+            }
+            return -1L;
         } catch (Exception ignored) {
             return -1L;
         } finally {

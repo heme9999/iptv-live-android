@@ -23,7 +23,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.MimeTypes;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
+import androidx.media3.datasource.DefaultDataSource;
+import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.ui.PlayerView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -397,11 +403,51 @@ public final class MainActivity extends AppCompatActivity {
         if (url != null) play(new Channel(name, "最近观看", url)); else if (!allChannels.isEmpty()) play(allChannels.get(0));
     }
 
-    private void ensurePlayer() { if (player == null) { player = new ExoPlayer.Builder(this).build(); playerView.setPlayer(player); } }
+    @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
+    private void ensurePlayer() {
+        if (player == null) {
+            DefaultHttpDataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory()
+                .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 APTV/1.0")
+                .setAllowCrossProtocolRedirects(true)
+                .setConnectTimeoutMs(15000)
+                .setReadTimeoutMs(15000)
+                .setKeepPostFor302Redirects(true);
+
+            DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this, httpDataSourceFactory);
+
+            DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(this)
+                .setDataSourceFactory(dataSourceFactory);
+
+            player = new ExoPlayer.Builder(this)
+                .setMediaSourceFactory(mediaSourceFactory)
+                .build();
+
+            player.addListener(new Player.Listener() {
+                @Override public void onPlayerError(PlaybackException error) {
+                    Toast.makeText(MainActivity.this, "正在重新连接直播源...", Toast.LENGTH_SHORT).show();
+                    if (player != null) {
+                        player.prepare();
+                        player.play();
+                    }
+                }
+            });
+
+            playerView.setPlayer(player);
+        }
+    }
+
     private void play(Channel channel) {
         ensurePlayer();
         preferences.edit().putString("last_url", channel.url).putString("last_name", channel.name).apply();
-        player.setMediaItem(MediaItem.fromUri(Uri.parse(channel.url))); player.prepare(); player.play();
+
+        MediaItem.Builder mediaItemBuilder = new MediaItem.Builder().setUri(Uri.parse(channel.url));
+        if (!channel.url.contains(".flv") && !channel.url.contains(".mp4")) {
+            mediaItemBuilder.setMimeType(MimeTypes.APPLICATION_M3U8);
+        }
+        player.setMediaItem(mediaItemBuilder.build());
+        player.prepare();
+        player.play();
+
         TextView nowPlaying = findViewById(R.id.now_playing);
         if (nowPlaying != null) {
             String latency = channel.latencyMs >= 0 ? " · " + channel.latencyMs + " ms" : "";
