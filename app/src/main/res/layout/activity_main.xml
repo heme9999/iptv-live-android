@@ -20,12 +20,12 @@
             </LinearLayout>
             <HorizontalScrollView android:layout_width="match_parent" android:layout_height="62dp" android:scrollbars="none">
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center_vertical" android:orientation="horizontal">
-                    <Button android:id="@+id/home_live" android:layout_width="wrap_content" android:layout_height="46dp" android:layout_marginEnd="10dp" android:focusable="true" android:text="全部频道" />
-                    <Button android:id="@+id/home_categories" android:layout_width="wrap_content" android:layout_height="46dp" android:layout_marginEnd="10dp" android:focusable="true" android:text="频道分类" />
-                    <Button android:layout_width="wrap_content" android:layout_height="46dp" android:focusable="false" android:text="★ 我的收藏" />
+                    <Button android:id="@+id/home_live" style="@style/NavButton" android:layout_marginEnd="12dp" android:text="全部频道" />
+                    <Button android:id="@+id/home_categories" style="@style/NavButton" android:layout_marginEnd="12dp" android:text="频道分类" />
+                    <Button android:id="@+id/home_refresh" style="@style/NavButton" android:text="🔄 刷新列表" />
                 </LinearLayout>
             </HorizontalScrollView>
-            <androidx.recyclerview.widget.RecyclerView android:id="@id/home_channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="12dp" />
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/home_channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="24dp" />
         </LinearLayout>
         <LinearLayout android:id="@+id/page_live" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:visibility="gone">
             <LinearLayout android:id="@+id/sidebar" android:layout_width="330dp" android:layout_height="match_parent" android:background="#0E1723" android:orientation="vertical" android:padding="16dp">
@@ -52,6 +52,7 @@
                 <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay" android:layout_width="wrap_content" android:layout_height="64dp" android:layout_marginTop="24dp" android:background="@drawable/setting_control_background" android:focusable="true" android:minWidth="520dp" android:paddingLeft="18dp" android:paddingRight="18dp" android:text="进入直播时自动播放第一个频道" android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold" />
                 <TextView style="@style/SettingLabel" android:layout_marginTop="28dp" android:text="播放源管理" />
                 <TextView android:id="@+id/source_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="当前播放源：官方内置源" android:textColor="#8290A3" android:textSize="15sp" />
+                <Button android:id="@+id/btn_refresh_playlist" style="@style/SettingButton" android:layout_width="wrap_content" android:layout_height="58dp" android:layout_marginTop="14dp" android:backgroundTint="#3196F3" android:paddingLeft="24dp" android:paddingRight="24dp" android:text="🔄  立即刷新同步播放清单" android:textColor="#07101A" android:textStyle="bold" />
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
                     <Button android:id="@+id/btn_edit_source" style="@style/SettingButton" android:layout_marginEnd="16dp" android:text="添加 / 更换播放源" />
                     <Button android:id="@+id/btn_reset_source" style="@style/SettingButton" android:text="恢复默认播放源" />

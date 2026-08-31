@@ -142,6 +142,9 @@ public final class MainActivity extends AppCompatActivity {
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
+    private static final String DEFAULT_REMOTE_M3U = "https://raw.githubusercontent.com/heme9999/iptv-live/main/live.m3u";
+    private static final String DEFAULT_CDN_M3U = "https://fastly.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u";
+
     private void configureNavigation() {
         findViewById(R.id.nav_home).setOnClickListener(v -> showPage(0));
         findViewById(R.id.nav_live).setOnClickListener(v -> showPage(1));
@@ -150,6 +153,8 @@ public final class MainActivity extends AppCompatActivity {
         findViewById(R.id.home_live).setOnClickListener(v -> showPage(1));
         findViewById(R.id.home_categories).setOnClickListener(v -> showPage(2));
         findViewById(R.id.home_continue).setOnClickListener(v -> continueWatching());
+        View homeRefresh = findViewById(R.id.home_refresh);
+        if (homeRefresh != null) homeRefresh.setOnClickListener(v -> refreshPlaylist(true));
     }
 
     private void configureSettings() {
@@ -165,6 +170,8 @@ public final class MainActivity extends AppCompatActivity {
             autoplay.setChecked(preferences.getBoolean("autoplay", false));
             autoplay.setOnCheckedChangeListener((button, checked) -> preferences.edit().putBoolean("autoplay", checked).apply());
         }
+        View btnRefreshPlaylist = findViewById(R.id.btn_refresh_playlist);
+        if (btnRefreshPlaylist != null) btnRefreshPlaylist.setOnClickListener(v -> refreshPlaylist(true));
         View btnEditSource = findViewById(R.id.btn_edit_source);
         if (btnEditSource != null) btnEditSource.setOnClickListener(v -> showEditSourceDialog());
         View btnResetSource = findViewById(R.id.btn_reset_source);
@@ -183,6 +190,56 @@ public final class MainActivity extends AppCompatActivity {
                 status.setText("当前播放源：官方内置高质量源（" + allChannels.size() + " 个频道）");
             }
         }
+    }
+
+    public void refreshPlaylist(boolean userInitiated) {
+        if (userInitiated) {
+            Toast.makeText(this, "正在刷新并同步最新播放清单...", Toast.LENGTH_SHORT).show();
+        }
+        new Thread(() -> {
+            String customUrl = preferences.getString("custom_m3u_url", null);
+            List<Channel> fetched = null;
+            String sourceName = "";
+            if (customUrl != null && !customUrl.trim().isEmpty()) {
+                try {
+                    String urlNoCache = customUrl.contains("?") ? customUrl + "&_t=" + System.currentTimeMillis() : customUrl + "?_t=" + System.currentTimeMillis();
+                    fetched = M3uParser.fromUrl(urlNoCache);
+                    sourceName = "自定义源";
+                } catch (Exception e) {
+                    try {
+                        fetched = M3uParser.fromUrl(customUrl);
+                        sourceName = "自定义源";
+                    } catch (Exception ignore) {}
+                }
+            }
+            if (fetched == null || fetched.isEmpty()) {
+                try {
+                    fetched = M3uParser.fromUrl(DEFAULT_REMOTE_M3U + "?_t=" + System.currentTimeMillis());
+                    sourceName = "官方云端源";
+                } catch (Exception e1) {
+                    try {
+                        fetched = M3uParser.fromUrl(DEFAULT_CDN_M3U + "?_t=" + System.currentTimeMillis());
+                        sourceName = "全球 CDN 加速源";
+                    } catch (Exception ignore) {}
+                }
+            }
+            if (fetched != null && !fetched.isEmpty()) {
+                final List<Channel> finalChannels = fetched;
+                final String finalSource = sourceName;
+                runOnUiThread(() -> {
+                    applyNewChannels(finalChannels);
+                    if (userInitiated) {
+                        Toast.makeText(this, "播放清单已更新！共载入 " + finalChannels.size() + " 个频道（" + finalSource + "）", Toast.LENGTH_LONG).show();
+                    }
+                });
+            } else {
+                if (userInitiated) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "刷新失败，网络超时或源不可用（已保留当前列表）", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+        }).start();
     }
 
     private void showEditSourceDialog() {
@@ -292,28 +349,12 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void loadChannels() {
-        String customUrl = preferences.getString("custom_m3u_url", null);
-        if (customUrl != null && !customUrl.trim().isEmpty()) {
-            new Thread(() -> {
-                try {
-                    List<Channel> fetched = M3uParser.fromUrl(customUrl);
-                    runOnUiThread(() -> applyNewChannels(fetched));
-                } catch (Exception e) {
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "自定义源拉取失败，已使用内置源备用", Toast.LENGTH_SHORT).show();
-                        try {
-                            applyNewChannels(M3uParser.fromAssets(this));
-                        } catch (Exception ignore) {}
-                    });
-                }
-            }).start();
-        } else {
-            try {
-                applyNewChannels(M3uParser.fromAssets(this));
-            } catch (Exception error) {
-                Toast.makeText(this, "频道载入失败：" + error.getMessage(), Toast.LENGTH_LONG).show();
-            }
+        try {
+            applyNewChannels(M3uParser.fromAssets(this));
+        } catch (Exception e) {
+            // fallback
         }
+        refreshPlaylist(false);
     }
 
     private int categoryPriority(String group) {
