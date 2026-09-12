@@ -156,13 +156,11 @@ public final class MainActivity extends AppCompatActivity {
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
     private static final String[] REMOTE_PLAYLIST_URLS = {
-        "https://fastly.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
         "https://cdn.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
-        "https://gcore.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
-        "https://testingcf.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
-        "https://raw.gitmirror.com/heme9999/iptv-live/main/live.m3u",
+        "https://raw.githubusercontent.com/heme9999/iptv-live/main/live.m3u",
         "https://ghproxy.net/https://raw.githubusercontent.com/heme9999/iptv-live/main/live.m3u",
-        "https://raw.githubusercontent.com/heme9999/iptv-live/main/live.m3u"
+        "https://gcore.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
+        "https://fastly.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u"
     };
 
     private void configureNavigation() {
