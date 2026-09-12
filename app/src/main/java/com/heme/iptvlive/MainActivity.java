@@ -155,8 +155,15 @@ public final class MainActivity extends AppCompatActivity {
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
-    private static final String DEFAULT_REMOTE_M3U = "https://raw.githubusercontent.com/heme9999/iptv-live/main/live.m3u";
-    private static final String DEFAULT_CDN_M3U = "https://fastly.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u";
+    private static final String[] REMOTE_PLAYLIST_URLS = {
+        "https://fastly.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
+        "https://cdn.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
+        "https://gcore.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
+        "https://testingcf.jsdelivr.net/gh/heme9999/iptv-live@main/live.m3u",
+        "https://raw.gitmirror.com/heme9999/iptv-live/main/live.m3u",
+        "https://ghproxy.net/https://raw.githubusercontent.com/heme9999/iptv-live/main/live.m3u",
+        "https://raw.githubusercontent.com/heme9999/iptv-live/main/live.m3u"
+    };
 
     private void configureNavigation() {
         findViewById(R.id.nav_home).setOnClickListener(v -> showPage(0));
@@ -226,13 +233,14 @@ public final class MainActivity extends AppCompatActivity {
                 }
             }
             if (fetched == null || fetched.isEmpty()) {
-                try {
-                    fetched = M3uParser.fromUrl(DEFAULT_REMOTE_M3U + "?_t=" + System.currentTimeMillis());
-                    sourceName = "官方云端源";
-                } catch (Exception e1) {
+                for (String remoteUrl : REMOTE_PLAYLIST_URLS) {
                     try {
-                        fetched = M3uParser.fromUrl(DEFAULT_CDN_M3U + "?_t=" + System.currentTimeMillis());
-                        sourceName = "全球 CDN 加速源";
+                        String noCache = remoteUrl.contains("?") ? remoteUrl + "&_t=" + System.currentTimeMillis() : remoteUrl + "?_t=" + System.currentTimeMillis();
+                        fetched = M3uParser.fromUrl(noCache);
+                        if (fetched != null && !fetched.isEmpty()) {
+                            sourceName = remoteUrl.contains("jsdelivr") ? "全球 CDN 加速源" : (remoteUrl.contains("gitmirror") || remoteUrl.contains("ghproxy") ? "国内加速镜像源" : "官方云端源");
+                            break;
+                        }
                     } catch (Exception ignore) {}
                 }
             }

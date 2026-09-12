@@ -47,8 +47,8 @@ final class M3uParser {
         URL url = new URL(urlString.trim());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
-        conn.setConnectTimeout(8000);
-        conn.setReadTimeout(12000);
+        conn.setConnectTimeout(4000);
+        conn.setReadTimeout(6000);
         conn.setInstanceFollowRedirects(true);
         conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
         int responseCode = conn.getResponseCode();

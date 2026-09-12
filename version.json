@@ -1,0 +1,19 @@
+{
+  "tag_name": "v6.0.24",
+  "name": "v6.0.24",
+  "body": "1. 修复 ESPN 1、ESPN 2 与 ESPN 3 1080P 超清赛事源（美网/综合赛事）。\n2. 优化全球 CDN 与国内镜像更新链路，彻底解决 GitHub 403 限流与列表刷新失败问题。",
+  "assets": [
+    {
+      "name": "IPTV-Live-Sony.apk",
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.24/IPTV-Live-Sony.apk"
+    },
+    {
+      "name": "IPTV-Live-TCL.apk",
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.24/IPTV-Live-TCL.apk"
+    },
+    {
+      "name": "IPTV-Live-Pixel.apk",
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.24/IPTV-Live-Pixel.apk"
+    }
+  ]
+}
