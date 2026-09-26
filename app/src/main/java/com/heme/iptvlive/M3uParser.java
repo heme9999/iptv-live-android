@@ -29,6 +29,8 @@ final class M3uParser {
                 Matcher matcher = GROUP.matcher(line);
                 group = matcher.find() ? matcher.group(1).trim() : "其他";
                 if (group.isEmpty()) group = "其他";
+                if (name.startsWith("五星体育")) name = "五星体育";
+                else if (name.startsWith("广东体育")) name = "广东体育";
             } else if (!line.isEmpty() && !line.startsWith("#") && name != null) {
                 result.add(new Channel(name, group, line));
                 name = null;
