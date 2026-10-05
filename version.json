@@ -1,19 +1,20 @@
 {
-  "tag_name": "v6.0.24",
-  "name": "v6.0.24",
-  "body": "1. 修复 ESPN 1、ESPN 2 与 ESPN 3 1080P 超清赛事源（美网/综合赛事）。\n2. 优化全球 CDN 与国内镜像更新链路，彻底解决 GitHub 403 限流与列表刷新失败问题。",
+  "tag_name": "v6.0.25",
+  "version_code": 625,
+  "name": "v6.0.25",
+  "body": "1. 手机版 (Pixel) 新增 DLNA / UPnP 无线投屏功能，支持大厅与播放界面一键投屏至智能电视/电视盒子。\n2. 投屏状态下换台自动同步电视端播放。\n3. 优化广东体育、五星体育高清直播流与音频画面同步。",
   "assets": [
     {
       "name": "IPTV-Live-Sony.apk",
-      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.24/IPTV-Live-Sony.apk"
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.25/IPTV-Live-Sony.apk"
     },
     {
       "name": "IPTV-Live-TCL.apk",
-      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.24/IPTV-Live-TCL.apk"
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.25/IPTV-Live-TCL.apk"
     },
     {
       "name": "IPTV-Live-Pixel.apk",
-      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.24/IPTV-Live-Pixel.apk"
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.25/IPTV-Live-Pixel.apk"
     }
   ]
 }
