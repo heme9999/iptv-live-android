@@ -12,8 +12,32 @@
     </LinearLayout>
     <FrameLayout android:id="@+id/page_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1">
         <LinearLayout android:id="@+id/page_home" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:paddingLeft="12dp" android:paddingRight="12dp" android:paddingTop="18dp">
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="▣  电视直播大厅" android:textColor="#F5F7FB" android:textSize="25sp" android:textStyle="bold" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="高清直播 · 连接延时实时测速" android:textColor="#8490A3" android:textSize="13sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▣  电视直播大厅" android:textColor="#F5F7FB" android:textSize="25sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="高清直播 · 连接延时实时测速" android:textColor="#8490A3" android:textSize="13sp" />
+                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/home_cast"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/cast_button_background"
+                    android:contentDescription="投屏"
+                    android:padding="9dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_cast"
+                    android:tint="#78FFF0"
+                    android:visibility="visible" />
+            </LinearLayout>
             <Button android:id="@+id/home_continue" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="14dp" android:backgroundTint="#3196F3" android:text="▶  继续播放" android:textColor="#07101A" android:textStyle="bold" />
             <HorizontalScrollView android:layout_width="match_parent" android:layout_height="58dp" android:scrollbars="none">
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center_vertical" android:orientation="horizontal">
@@ -25,7 +49,34 @@
             <androidx.recyclerview.widget.RecyclerView android:id="@id/home_channels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="12dp" />
         </LinearLayout>
         <LinearLayout android:id="@+id/page_live" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:visibility="gone">
-            <androidx.media3.ui.PlayerView android:id="@+id/player_view" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="#000000" android:keepScreenOn="true" app:show_buffering="when_playing" app:use_controller="true" />
+            <FrameLayout
+                android:id="@+id/player_container"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+                <androidx.media3.ui.PlayerView
+                    android:id="@+id/player_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#000000"
+                    android:keepScreenOn="true"
+                    app:show_buffering="when_playing"
+                    app:use_controller="true" />
+                <ImageButton
+                    android:id="@+id/btn_cast"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/cast_button_background"
+                    android:contentDescription="投屏到电视"
+                    android:padding="8dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_cast"
+                    android:tint="#78FFF0"
+                    android:visibility="visible" />
+            </FrameLayout>
             <LinearLayout android:id="@+id/sidebar" android:layout_width="330dp" android:layout_height="match_parent" android:background="#0D111A" android:orientation="vertical" android:padding="10dp">
                 <TextView android:id="@id/now_playing" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/mobile_card" android:padding="10dp" android:text="LIVE  请选择频道" android:textColor="#F5F7FB" android:textSize="14sp" android:textStyle="bold" />
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" android:paddingBottom="4dp" android:text="全部频道" android:textColor="#39A7FF" android:textSize="15sp" android:textStyle="bold" />

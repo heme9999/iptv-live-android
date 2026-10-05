@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -64,10 +66,17 @@ public final class MainActivity extends AppCompatActivity {
     private final List<String> orderedCategoryGroups = new ArrayList<>();
     private Toast channelToast;
     private final LatencyTester latencyTester = new LatencyTester();
+    private DlnaManager dlnaManager;
+    private DlnaDevice currentCastDevice;
+    private AlertDialog castDialog;
+    private CastDeviceAdapter castDeviceAdapter;
+    private View castBtn;
+    private View homeCastBtn;
 
     @Override protected void onCreate(@Nullable Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_main);
+        dlnaManager = new DlnaManager(this);
         preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
         playerView = findViewById(R.id.player_view);
         pages.add(findViewById(R.id.page_home));
@@ -133,7 +142,18 @@ public final class MainActivity extends AppCompatActivity {
             LinearLayout sidebar = findViewById(R.id.sidebar);
             livePage.setOrientation(LinearLayout.VERTICAL);
             sidebar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.4f));
-            playerView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+            findViewById(R.id.player_container).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
+            castBtn = findViewById(R.id.btn_cast);
+            homeCastBtn = findViewById(R.id.home_cast);
+            if (castBtn != null) {
+                castBtn.setVisibility(View.VISIBLE);
+                castBtn.setOnClickListener(v -> showCastDialog());
+            }
+            if (homeCastBtn != null) {
+                homeCastBtn.setVisibility(View.VISIBLE);
+                homeCastBtn.setOnClickListener(v -> showCastDialog());
+            }
 
             LinearLayout categoryPage = findViewById(R.id.page_categories);
             categoryPage.setOrientation(LinearLayout.VERTICAL);
@@ -487,6 +507,11 @@ public final class MainActivity extends AppCompatActivity {
         } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             enterMobilePlayerFullscreen();
         }
+
+        if (currentCastDevice != null && dlnaManager != null) {
+            dlnaManager.cast(currentCastDevice, channel.url, channel.name, null);
+            Toast.makeText(this, "已同步投屏: " + channel.name + " ➔ " + currentCastDevice.getFriendlyName(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showChannelToast(Channel channel) {
@@ -732,9 +757,152 @@ public final class MainActivity extends AppCompatActivity {
         releasePlayer();
     }
 
+    private void showCastDialog() {
+        if (castDialog != null && castDialog.isShowing()) {
+            castDialog.dismiss();
+        }
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_cast, null);
+        RecyclerView deviceList = dialogView.findViewById(R.id.cast_device_list);
+        TextView emptyView = dialogView.findViewById(R.id.cast_empty_view);
+        View progress = dialogView.findViewById(R.id.cast_progress);
+        View refreshBtn = dialogView.findViewById(R.id.cast_refresh);
+        View activeContainer = dialogView.findViewById(R.id.cast_active_container);
+        TextView activeDeviceName = dialogView.findViewById(R.id.cast_active_device_name);
+        Button stopBtn = dialogView.findViewById(R.id.cast_stop_btn);
+
+        deviceList.setLayoutManager(new LinearLayoutManager(this));
+        castDeviceAdapter = new CastDeviceAdapter(device -> {
+            Channel target = currentChannel;
+            if (target == null && !allChannels.isEmpty()) {
+                target = allChannels.get(currentPlayingIndex >= 0 && currentPlayingIndex < allChannels.size() ? currentPlayingIndex : 0);
+            }
+            if (target != null) {
+                performCast(device, target);
+                if (castDialog != null) castDialog.dismiss();
+            } else {
+                Toast.makeText(this, "暂无可投屏的频道", Toast.LENGTH_SHORT).show();
+            }
+        });
+        deviceList.setAdapter(castDeviceAdapter);
+
+        updateCastDialogUi(activeContainer, activeDeviceName, emptyView, deviceList);
+
+        stopBtn.setOnClickListener(v -> {
+            if (currentCastDevice != null) {
+                dlnaManager.stop(currentCastDevice, new DlnaManager.ActionCallback() {
+                    @Override public void onSuccess() {
+                        Toast.makeText(MainActivity.this, "已停止投屏", Toast.LENGTH_SHORT).show();
+                        currentCastDevice = null;
+                        updateCastButtonUi();
+                        updateCastDialogUi(activeContainer, activeDeviceName, emptyView, deviceList);
+                    }
+                    @Override public void onError(String message) {
+                        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+        refreshBtn.setOnClickListener(v -> {
+            startDeviceDiscovery(progress, emptyView, deviceList);
+        });
+
+        castDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (castDialog.getWindow() != null) {
+            castDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        castDialog.show();
+
+        startDeviceDiscovery(progress, emptyView, deviceList);
+    }
+
+    private void updateCastDialogUi(View activeContainer, TextView activeDeviceName, TextView emptyView, RecyclerView deviceList) {
+        if (currentCastDevice != null) {
+            activeContainer.setVisibility(View.VISIBLE);
+            activeDeviceName.setText(currentCastDevice.getFriendlyName() + " (" + currentCastDevice.getIpAddress() + ")");
+        } else {
+            activeContainer.setVisibility(View.GONE);
+        }
+
+        List<DlnaDevice> devices = dlnaManager.getDiscoveredDevices();
+        castDeviceAdapter.updateDevices(devices, currentCastDevice);
+        if (devices.isEmpty()) {
+            emptyView.setVisibility(View.VISIBLE);
+            deviceList.setVisibility(View.GONE);
+        } else {
+            emptyView.setVisibility(View.GONE);
+            deviceList.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void startDeviceDiscovery(View progress, TextView emptyView, RecyclerView deviceList) {
+        if (progress != null) progress.setVisibility(View.VISIBLE);
+        emptyView.setText("正在搜索局域网内的投屏设备 (DLNA / UPnP)...\n请确保手机和电视连接在同一个 Wi-Fi 网络下。");
+        dlnaManager.startDiscovery(new DlnaManager.DiscoveryListener() {
+            @Override
+            public void onDeviceFound(DlnaDevice device) {
+                if (castDeviceAdapter != null) {
+                    List<DlnaDevice> devices = dlnaManager.getDiscoveredDevices();
+                    castDeviceAdapter.updateDevices(devices, currentCastDevice);
+                    if (!devices.isEmpty()) {
+                        emptyView.setVisibility(View.GONE);
+                        deviceList.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+
+            @Override
+            public void onDiscoveryFinished(List<DlnaDevice> devices) {
+                if (progress != null) progress.setVisibility(View.GONE);
+                if (devices.isEmpty()) {
+                    emptyView.setText("未发现投屏设备\n请检查：\n1. 电视已开机且已连接同一 Wi-Fi\n2. 电视已开启投屏服务 (DLNA / 无线投屏)");
+                    emptyView.setVisibility(View.VISIBLE);
+                    deviceList.setVisibility(View.GONE);
+                } else {
+                    emptyView.setVisibility(View.GONE);
+                    deviceList.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
+    private void performCast(DlnaDevice device, Channel channel) {
+        Toast.makeText(this, "正在向 " + device.getFriendlyName() + " 发起投屏...", Toast.LENGTH_SHORT).show();
+        dlnaManager.cast(device, channel.url, channel.name, new DlnaManager.ActionCallback() {
+            @Override
+            public void onSuccess() {
+                currentCastDevice = device;
+                updateCastButtonUi();
+                Toast.makeText(MainActivity.this, "已成功投屏至 " + device.getFriendlyName(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void updateCastButtonUi() {
+        int color = currentCastDevice != null ? 0xFF00E676 : 0xFF78FFF0;
+        if (castBtn instanceof android.widget.ImageView) {
+            ((android.widget.ImageView) castBtn).setColorFilter(color);
+        }
+        if (homeCastBtn instanceof android.widget.ImageView) {
+            ((android.widget.ImageView) homeCastBtn).setColorFilter(color);
+        }
+    }
+
     @Override protected void onDestroy() {
         super.onDestroy();
         releasePlayer();
         latencyTester.close();
+        if (dlnaManager != null) {
+            dlnaManager.release();
+        }
     }
 }

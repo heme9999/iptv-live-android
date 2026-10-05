@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#111C2A"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Dialog Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_cast"
+            android:tint="#78FFF0"
+            android:contentDescription="Cast" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:text="投屏到电视"
+            android:textColor="#F4F7FA"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/cast_progress"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:indeterminateTint="#78FFF0" />
+
+        <ImageButton
+            android:id="@+id/cast_refresh"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_popup_sync"
+            android:tint="#78FFF0"
+            android:contentDescription="Refresh" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="14dp"
+        android:background="#1F2F43" />
+
+    <!-- Current Casting Status Bar -->
+    <LinearLayout
+        android:id="@+id/cast_active_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1A2738"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:layout_marginBottom="14dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="正在投屏至"
+                android:textColor="#8290A3"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/cast_active_device_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="#78FFF0"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/cast_stop_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:backgroundTint="#FF4B4B"
+            android:text="停止投屏"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Empty State / Scanning Notice -->
+    <TextView
+        android:id="@+id/cast_empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:text="正在搜索局域网内的投屏设备 (DLNA / UPnP)...\n请确保手机和电视连接在同一个 Wi-Fi 网络下。"
+        android:textColor="#9AA9BC"
+        android:textSize="14sp"
+        android:lineSpacingExtra="4dp" />
+
+    <!-- Device List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/cast_device_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="320dp"
+        android:clipToPadding="false"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="提示：支持主流智能电视 (TCL、小米、海信、索尼等)、电视盒子及 DLNA 投屏接收器。"
+        android:textColor="#5E6F84"
+        android:textSize="12sp" />
+</LinearLayout>
