@@ -8,10 +8,10 @@ android {
 
     defaultConfig {
         applicationId = "com.heme.iptvlive"
-        minSdk = 23
+        minSdk = 16
         targetSdk = 35
-        versionCode = 625
-        versionName = "6.0.25"
+        versionCode = 626
+        versionName = "6.0.26-legacy"
         buildConfigField("String", "GITHUB_REPO", "\"heme9999/iptv-live-android\"")
     }
 
@@ -29,6 +29,14 @@ android {
 
     flavorDimensions += "device"
     productFlavors {
+        create("letv") {
+            dimension = "device"
+            applicationIdSuffix = ".letv"
+            versionNameSuffix = "-letv"
+            buildConfigField("String", "UPDATE_ASSET", "\"IPTV-Live-LeTV.apk\"")
+            buildConfigField("boolean", "TV_UI", "true")
+            resValue("string", "app_name", "My IPTV")
+        }
         create("tcl") {
             dimension = "device"
             applicationIdSuffix = ".tcl"
@@ -43,14 +51,6 @@ android {
             versionNameSuffix = "-sony"
             buildConfigField("String", "UPDATE_ASSET", "\"IPTV-Live-Sony.apk\"")
             buildConfigField("boolean", "TV_UI", "true")
-            resValue("string", "app_name", "My IPTV")
-        }
-        create("pixel") {
-            dimension = "device"
-            applicationIdSuffix = ".pixel"
-            versionNameSuffix = "-pixel"
-            buildConfigField("String", "UPDATE_ASSET", "\"IPTV-Live-Pixel.apk\"")
-            buildConfigField("boolean", "TV_UI", "false")
             resValue("string", "app_name", "My IPTV")
         }
     }
@@ -72,7 +72,4 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.media3:media3-exoplayer:1.5.1")
-    implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
-    implementation("androidx.media3:media3-ui:1.5.1")
 }

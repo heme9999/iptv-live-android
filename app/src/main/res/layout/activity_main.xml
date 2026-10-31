@@ -49,13 +49,13 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
-                <androidx.media3.ui.PlayerView
+                <VideoView
                     android:id="@+id/player_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:keepScreenOn="true"
-                    app:show_buffering="when_playing"
-                    app:use_controller="true" />
+                    
+                     />
                 <ImageButton
                     android:id="@+id/btn_cast"
                     android:layout_width="44dp"

@@ -1,12 +1,10 @@
 package com.heme.iptvlive;
 
-import android.app.PictureInPictureParams;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Rational;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,17 +22,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.media3.common.AudioAttributes;
-import androidx.media3.common.C;
-import androidx.media3.common.MediaItem;
-import androidx.media3.common.MimeTypes;
-import androidx.media3.common.PlaybackException;
-import androidx.media3.common.Player;
-import androidx.media3.datasource.DefaultDataSource;
-import androidx.media3.datasource.DefaultHttpDataSource;
-import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
-import androidx.media3.ui.PlayerView;
+import android.widget.VideoView;
+import android.media.MediaPlayer;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -48,8 +37,7 @@ public final class MainActivity extends AppCompatActivity {
     private static final String PREFS = "iptv_settings";
     private static final String[] START_PAGES = {"主页", "直播", "分类"};
     private final List<View> pages = new ArrayList<>();
-    private ExoPlayer player;
-    private PlayerView playerView;
+    private VideoView playerView;
     private List<Channel> allChannels = new ArrayList<>();
     private ChannelAdapter categoryChannelAdapter;
     private ChannelAdapter liveAdapter;
@@ -58,8 +46,7 @@ public final class MainActivity extends AppCompatActivity {
     private SharedPreferences preferences;
     private boolean mobilePlayerFullscreen;
     private boolean mobileDrawerVisible;
-    private boolean enteringPictureInPicture;
-    private boolean tvPlayerFullscreen;
+        private boolean tvPlayerFullscreen;
     private Channel currentChannel;
     private int currentPlayingIndex = 0;
     private TextListAdapter categoryAdapter;
@@ -438,43 +425,23 @@ public final class MainActivity extends AppCompatActivity {
         if (url != null) play(new Channel(name, "最近观看", url)); else if (!allChannels.isEmpty()) play(allChannels.get(0));
     }
 
-    @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
     private void ensurePlayer() {
-        if (player == null) {
-            DefaultHttpDataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory()
-                .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 APTV/1.0")
-                .setAllowCrossProtocolRedirects(true)
-                .setConnectTimeoutMs(15000)
-                .setReadTimeoutMs(15000)
-                .setKeepPostFor302Redirects(true);
-
-            DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this, httpDataSourceFactory);
-
-            DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(this)
-                .setDataSourceFactory(dataSourceFactory);
-
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .build();
-
-            player = new ExoPlayer.Builder(this)
-                .setMediaSourceFactory(mediaSourceFactory)
-                .setAudioAttributes(audioAttributes, true)
-                .setHandleAudioBecomingNoisy(true)
-                .build();
-
-            player.addListener(new Player.Listener() {
-                @Override public void onPlayerError(PlaybackException error) {
+        if (playerView != null) {
+            playerView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override public boolean onError(MediaPlayer mp, int what, int extra) {
                     Toast.makeText(MainActivity.this, "正在重新连接直播源...", Toast.LENGTH_SHORT).show();
-                    if (player != null) {
-                        player.prepare();
-                        player.play();
+                    if (currentChannel != null) {
+                        playerView.setVideoURI(Uri.parse(currentChannel.url));
+                        playerView.start();
                     }
+                    return true;
                 }
             });
-
-            playerView.setPlayer(player);
+            playerView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override public void onPrepared(MediaPlayer mp) {
+                    mp.start();
+                }
+            });
         }
     }
 
@@ -489,13 +456,11 @@ public final class MainActivity extends AppCompatActivity {
         }
         preferences.edit().putString("last_url", channel.url).putString("last_name", channel.name).apply();
 
-        MediaItem.Builder mediaItemBuilder = new MediaItem.Builder().setUri(Uri.parse(channel.url));
-        if (!channel.url.contains(".flv") && !channel.url.contains(".mp4")) {
-            mediaItemBuilder.setMimeType(MimeTypes.APPLICATION_M3U8);
+        if (playerView != null) {
+            playerView.stopPlayback();
+            playerView.setVideoURI(Uri.parse(channel.url));
+            playerView.start();
         }
-        player.setMediaItem(mediaItemBuilder.build());
-        player.prepare();
-        player.play();
 
         TextView nowPlaying = findViewById(R.id.now_playing);
         if (nowPlaying != null) {
@@ -686,74 +651,30 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void releasePlayer() {
-        if (player != null) {
+        if (playerView != null) {
             try {
-                player.setPlayWhenReady(false);
-                player.stop();
-                player.clearMediaItems();
-                player.release();
+                playerView.stopPlayback();
             } catch (Exception ignored) {
-            } finally {
-                player = null;
-                if (playerView != null) {
-                    playerView.setPlayer(null);
-                }
             }
-        }
-    }
-
-    @Override protected void onUserLeaveHint() {
-        super.onUserLeaveHint();
-        if (!BuildConfig.TV_UI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && player != null && player.isPlaying() && pages.size() > 1 && pages.get(1).getVisibility() == View.VISIBLE) {
-            try {
-                enteringPictureInPicture = true;
-                enterPictureInPictureMode(new PictureInPictureParams.Builder().setAspectRatio(new Rational(16, 9)).build());
-            } catch (Exception ignored) {
-                enteringPictureInPicture = false;
-            }
-        }
-    }
-
-    @Override public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
-        enteringPictureInPicture = false;
-        if (!isInPictureInPictureMode) {
-            // When leaving PiP (whether user closed PiP or dismissed it), kill player instantly!
-            releasePlayer();
         }
     }
 
     @Override protected void onResume() {
         super.onResume();
-        enteringPictureInPicture = false;
-        // If returning to foreground and on live tab with no player, restore playback cleanly
-        if (!BuildConfig.TV_UI && player == null && pages.size() > 1 && pages.get(1).getVisibility() == View.VISIBLE) {
+        if (!BuildConfig.TV_UI && playerView != null && !playerView.isPlaying() && pages.size() > 1 && pages.get(1).getVisibility() == View.VISIBLE) {
             continueWatching();
         }
     }
 
     @Override protected void onPause() {
         super.onPause();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            if (!isInPictureInPictureMode() && !enteringPictureInPicture) {
-                if (player != null) {
-                    player.setPlayWhenReady(false);
-                    player.pause();
-                }
-            }
-        } else {
-            if (player != null) {
-                player.setPlayWhenReady(false);
-                player.pause();
-            }
+        if (playerView != null) {
+            try { playerView.pause(); } catch (Exception ignored) {}
         }
     }
 
     @Override protected void onStop() {
         super.onStop();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode()) {
-            return;
-        }
         releasePlayer();
     }
 
