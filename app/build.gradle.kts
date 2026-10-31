@@ -33,7 +33,7 @@ android {
             dimension = "device"
             applicationIdSuffix = ".pixel"
             versionNameSuffix = "-pixel"
-            buildConfigField("String", "UPDATE_ASSET", ""IPTV-Live-Pixel.apk"")
+            buildConfigField("String", "UPDATE_ASSET", "\"IPTV-Live-Pixel.apk\"")
             buildConfigField("boolean", "TV_UI", "false")
             resValue("string", "app_name", "My IPTV")
         }
