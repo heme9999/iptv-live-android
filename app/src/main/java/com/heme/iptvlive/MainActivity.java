@@ -415,7 +415,7 @@ public final class MainActivity extends AppCompatActivity {
         for (int i = 0; i < pages.size(); i++) pages.get(i).setVisibility(i == index ? View.VISIBLE : View.GONE);
         int[] navIds = {R.id.nav_home, R.id.nav_live, R.id.nav_categories, R.id.nav_settings};
         for (int i = 0; i < navIds.length; i++) findViewById(navIds[i]).setSelected(i == index);
-        if (index == 1 && preferences.getBoolean("autoplay", false) && player == null && !allChannels.isEmpty()) play(allChannels.get(0));
+        if (index == 1 && preferences.getBoolean("autoplay", false) && (playerView == null || !playerView.isPlaying()) && !allChannels.isEmpty()) play(allChannels.get(0));
     }
 
     private void continueWatching() {
