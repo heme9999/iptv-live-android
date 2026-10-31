@@ -29,6 +29,14 @@ android {
 
     flavorDimensions += "device"
     productFlavors {
+        create("pixel") {
+            dimension = "device"
+            applicationIdSuffix = ".pixel"
+            versionNameSuffix = "-pixel"
+            buildConfigField("String", "UPDATE_ASSET", ""IPTV-Live-Pixel.apk"")
+            buildConfigField("boolean", "TV_UI", "false")
+            resValue("string", "app_name", "My IPTV")
+        }
         create("letv") {
             dimension = "device"
             applicationIdSuffix = ".letv"
