@@ -69,6 +69,19 @@ android {
     packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
 }
 
+configurations.all {
+    resolutionStrategy {
+        capabilitiesResolution.withCapability("org.jetbrains.kotlin:kotlin-stdlib-jdk7") {
+            select("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
+        }
+        capabilitiesResolution.withCapability("org.jetbrains.kotlin:kotlin-stdlib-jdk8") {
+            select("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
+        }
+    }
+    exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+    exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
+}
+
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
