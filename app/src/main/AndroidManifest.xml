@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="androidx.appcompat.resources, androidx.appcompat, androidx.core, androidx.fragment, androidx.activity, androidx.lifecycle, androidx.recyclerview" />
+    <uses-sdk tools:overrideLibrary="androidx.appcompat.resources, androidx.appcompat, androidx.core, androidx.core.ktx, androidx.fragment, androidx.activity, androidx.lifecycle, androidx.recyclerview" />
 
     <uses-feature
         android:name="android.hardware.touchscreen"
