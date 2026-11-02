@@ -21,12 +21,12 @@ import java.nio.charset.StandardCharsets;
 
 final class UpdateChecker {
     private static final String[] UPDATE_URLS = {
+        "https://api.github.com/repos/" + BuildConfig.GITHUB_REPO + "/releases/latest",
+        "https://ghproxy.net/https://raw.githubusercontent.com/" + BuildConfig.GITHUB_REPO + "/main/version.json",
+        "https://raw.githubusercontent.com/" + BuildConfig.GITHUB_REPO + "/main/version.json",
         "https://fastly.jsdelivr.net/gh/" + BuildConfig.GITHUB_REPO + "@main/version.json",
         "https://cdn.jsdelivr.net/gh/" + BuildConfig.GITHUB_REPO + "@main/version.json",
-        "https://gcore.jsdelivr.net/gh/" + BuildConfig.GITHUB_REPO + "@main/version.json",
-        "https://raw.githubusercontent.com/" + BuildConfig.GITHUB_REPO + "/main/version.json",
-        "https://ghproxy.net/https://raw.githubusercontent.com/" + BuildConfig.GITHUB_REPO + "/main/version.json",
-        "https://api.github.com/repos/" + BuildConfig.GITHUB_REPO + "/releases/latest"
+        "https://gcore.jsdelivr.net/gh/" + BuildConfig.GITHUB_REPO + "@main/version.json"
     };
 
     static void check(Activity activity, boolean userInitiated) {
