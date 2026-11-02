@@ -1,20 +1,20 @@
 {
-  "tag_name": "v6.0.25",
-  "version_code": 625,
-  "name": "v6.0.25",
-  "body": "1. 手机版 (Pixel) 新增 DLNA / UPnP 无线投屏功能，支持大厅与播放界面一键投屏至智能电视/电视盒子。\n2. 投屏状态下换台自动同步电视端播放。\n3. 优化广东体育、五星体育高清直播流与音频画面同步。",
+  "tag_name": "v6.0.26",
+  "version_code": 626,
+  "name": "v6.0.26",
+  "body": "1. 索尼电视 (Sony)、TCL 电视及手机端 (Pixel) 全面集成日本电视台防盗链协议 (Referer: https://mov3.co/)，解决日本电视频道连接超时与黑屏无法播放问题。\n2. 内置官方播放清单同步最新纯净源，杜绝恶意医疗广告劫持切流。\n3. 同步优化测速模块与视频播放核心网络配置。",
   "assets": [
     {
       "name": "IPTV-Live-Sony.apk",
-      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.25/IPTV-Live-Sony.apk"
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.26/IPTV-Live-Sony.apk"
     },
     {
       "name": "IPTV-Live-TCL.apk",
-      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.25/IPTV-Live-TCL.apk"
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.26/IPTV-Live-TCL.apk"
     },
     {
       "name": "IPTV-Live-Pixel.apk",
-      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.25/IPTV-Live-Pixel.apk"
+      "browser_download_url": "https://github.com/heme9999/iptv-live-android/releases/download/v6.0.26/IPTV-Live-Pixel.apk"
     }
   ]
 }

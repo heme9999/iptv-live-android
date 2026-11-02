@@ -53,6 +53,7 @@ final class M3uParser {
         conn.setReadTimeout(6000);
         conn.setInstanceFollowRedirects(true);
         conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+        conn.setRequestProperty("Referer", "https://mov3.co/");
         int responseCode = conn.getResponseCode();
         if (responseCode < 200 || responseCode >= 300) {
             throw new Exception("HTTP 响应错误：" + responseCode);

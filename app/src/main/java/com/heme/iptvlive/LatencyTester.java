@@ -32,6 +32,7 @@ final class LatencyTester {
                 connection.setReadTimeout(3_500);
                 connection.setInstanceFollowRedirects(true);
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 APTV/1.0");
+                connection.setRequestProperty("Referer", "https://mov3.co/");
                 connection.setRequestProperty("Cache-Control", "no-cache");
                 int code = connection.getResponseCode();
                 if (code == HttpURLConnection.HTTP_MOVED_PERM || code == HttpURLConnection.HTTP_MOVED_TEMP || code == 307 || code == 308) {
